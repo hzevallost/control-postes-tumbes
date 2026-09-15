@@ -209,7 +209,7 @@ else:
         
     with col_g2:
         if 'ESTADO' in df.columns:
-            st.subheader("📌 Estado (% de Avance)")
+            st.subheader("📌 Estado (% Total de Avance)")
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
