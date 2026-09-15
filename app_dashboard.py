@@ -58,8 +58,8 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# Título Principal con estilo
-st.title("📊 Dashboard de Control: Izaje de Postes en Vivo")
+# Título Principal actualizado
+st.title("📊 DASHBOARD DE CONTROL DE POSTES")
 st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
 st.markdown("---")
 
@@ -73,16 +73,12 @@ else:
     col_estado_idx = None
     for col in df.columns:
         valores_str = df[col].astype(str).str.upper()
-        # Buscamos filas que contengan los estados válidos del proyecto
         if valores_str.str.contains('PENDIENTE|ATENDIDO|CONFORME|OK').any() and col_estado_idx is None:
             col_estado_idx = col
 
     if col_estado_idx is not None:
-        # Normalizamos la celda 'OK' antigua por 'ATENDIDO' por compatibilidad automática
         df[col_estado_idx] = df[col_estado_idx].astype(str).str.upper().str.strip()
         df[col_estado_idx] = df[col_estado_idx].replace('OK', 'ATENDIDO')
-        
-        # Filtramos solo las filas que tengan estos estados válidos
         df = df[df[col_estado_idx].isin(['PENDIENTE', 'ATENDIDO', 'CONFORME'])]
     
     df = df.reset_index(drop=True)
@@ -118,13 +114,12 @@ else:
     if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
         df_filtrado = df_filtrado[df_filtrado['TERRENO'].astype(str) == terreno_seleccionado]
 
-    # --- MÉTRICAS PRINCIPALES (KPIs con los 3 estados) ---
+    # --- MÉTRICAS PRINCIPALES (KPIs) ---
     total_postes = len(df_filtrado)
     pendientes = len(df_filtrado[df_filtrado['ESTADO'] == 'PENDIENTE']) if 'ESTADO' in df.columns else 0
     atendidos = len(df_filtrado[df_filtrado['ESTADO'] == 'ATENDIDO']) if 'ESTADO' in df.columns else 0
     conformes = len(df_filtrado[df_filtrado['ESTADO'] == 'CONFORME']) if 'ESTADO' in df.columns else 0
     
-    # Avance basado en los conformes o atendidos totales
     porcentaje_avance = ((atendidos + conformes) / total_postes) * 100 if total_postes > 0 else 0
 
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -167,7 +162,7 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES CON EFECTO 3D (PLOTLY) ---
+    # --- GRÁFICAS VISUALES 3D (PLOTLY) ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
@@ -176,7 +171,6 @@ else:
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
-            # Gráfico circular 3D con colores específicos para cada estado
             fig_pie = px.pie(
                 conteo_estados, 
                 names='ESTADO', 
@@ -184,9 +178,9 @@ else:
                 hole=0.35,
                 color='ESTADO',
                 color_discrete_map={
-                    'CONFORME': '#28a745',   # Verde oficial
-                    'ATENDIDO': '#ffc107',   # Amarillo / Naranja preventivo
-                    'PENDIENTE': '#d9534f'   # Rojo alerta
+                    'CONFORME': '#28a745',
+                    'ATENDIDO': '#ffc107',
+                    'PENDIENTE': '#d9534f'
                 }
             )
             fig_pie.update_traces(
