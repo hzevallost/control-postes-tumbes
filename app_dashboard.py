@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados para tarjetas ejecutivas y optimización de espacios
+# Estilos CSS personalizados para tarjetas, espacios y redimensionamiento responsivo de logos
 st.markdown("""
     <style>
         .metric-card {
@@ -43,6 +43,14 @@ st.markdown("""
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
+        /* Clase adaptable para que los logos se redimensionen automáticamente en celulares */
+        .responsive-logo {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -63,28 +71,36 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR: LOGO IZQUIERDA, TÍTULO CENTRADO, LOGO DERECHA ---
+# --- ENCABEZADO SUPERIOR RESPONSIVO: LOGO IZQ, TÍTULO CENTRADO, LOGO DER ---
 col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
 
 with col_logo1:
     try:
-        st.image("quantum.png", width=170)
+        # Usamos HTML con la clase CSS responsiva para que en celular baje su tamaño automáticamente
+        st.markdown(
+            '<div style="text-align: center;"><img src="app/static/quantum.png" class="responsive-logo" style="width: 170px;"></div>', 
+            unsafe_allow_html=True
+        )
     except:
-        st.write("Logo Quantum no encontrado")
+        # Respaldo nativo si el servidor local de archivos estáticos varía
+        st.image("quantum.png", width=170)
 
 with col_title:
     st.markdown("""
         <div style='text-align: center;'>
-            <h2 style='color: #212529; margin-bottom: 0px;'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
-            <p style='color: #6c757d; margin-top: 5px; font-size: 16px;'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
+            <h2 style='color: #212529; margin-bottom: 0px; font-size: calc(1.2rem + 1vw);'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
+            <p style='color: #6c757d; margin-top: 5px; font-size: calc(0.8rem + 0.3vw);'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
         </div>
     """, unsafe_allow_html=True)
 
 with col_logo2:
     try:
-        st.image("logo.png", width=150)
+        st.markdown(
+            '<div style="text-align: center;"><img src="app/static/logo.png" class="responsive-logo" style="width: 140px;"></div>', 
+            unsafe_allow_html=True
+        )
     except:
-        st.write("Logo Municipalidad no encontrado")
+        st.image("logo.png", width=140)
 
 st.markdown("---")
 
