@@ -72,12 +72,9 @@ with col_head1:
     st.markdown("Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.")
 
 with col_head2:
-    # AQUÍ PUEDES PONER LA RUTA DE TU LOGOTIPO O IMAGEN EN GITHUB (ej: 'logo.png')
-    # O también puedes usar una URL web pública directamente.
     try:
-        st.image("logo.png", width=220) # Si subes un archivo llamado logo.png a GitHub
+        st.image("logo.png", width=220)
     except:
-        # Imagen de respaldo decorativa institucional si aún no subes el logo
         st.image("https://images.unsplash.com/photo-1541888946425-d0fbb18f86f7?q=80&w=300&auto=format&fit=crop", width=220, caption="Control de Infraestructura")
 
 st.markdown("---")
@@ -172,39 +169,45 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES ---
+    # --- GRÁFICAS VISUALES (CON ESTADOS PENDIENTE, ATENDIDO Y CONFORME EN BARRAS) ---
     col_g1, col_g2 = st.columns(2)
     
+    color_estados = {
+        'PENDIENTE': '#d9534f',
+        'ATENDIDO': '#ffc107',
+        'CONFORME': '#28a745'
+    }
+
     with col_g1:
-        if 'ZONA' in df.columns:
+        if 'ZONA' in df.columns and 'ESTADO' in df.columns:
             st.subheader("🗺️ Observados por Zonas")
-            conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
-            conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
-            fig_bar3d = go.Figure(data=[
-                go.Bar(
-                    x=conteo_zonas['ZONA'],
-                    y=conteo_zonas['CANTIDAD'],
-                    text=conteo_zonas['CANTIDAD'],
-                    textposition='auto',
-                    marker=dict(
-                        color=['#f0ad4e', '#0275d8', '#5cb85c'],
-                        line=dict(color='#111111', width=2),
-                        opacity=0.95
-                    )
-                )
-            ])
-            fig_bar3d.update_layout(
+            # Agrupación cruzada para desglosar por estados en las barras
+            df_zona_estado = df_filtrado.groupby(['ZONA', 'ESTADO']).size().unstack(fill_value=0).reset_index()
+            
+            fig_bar_zona = go.Figure()
+            for estado in ['PENDIENTE', 'ATENDIDO', 'CONFORME']:
+                if estado in df_zona_estado.columns:
+                    fig_bar_zona.add_trace(go.Bar(
+                        name=estado,
+                        x=df_zona_estado['ZONA'],
+                        y=df_zona_estado[estado],
+                        marker_color=color_estados.get(estado, '#333333'),
+                        marker_line=dict(color='#111111', width=1.5)
+                    ))
+
+            fig_bar_zona.update_layout(
+                barmode='group',
                 margin=dict(t=20, b=0, l=0, r=0),
                 height=320,
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
                 xaxis=dict(title='Zona', showgrid=False, linecolor='black', linewidth=2),
                 yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
-                bargap=0.35
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
-            st.plotly_chart(fig_bar3d, use_container_width=True, config={'displayModeBar': False})
-               
+            st.plotly_chart(fig_bar_zona, use_container_width=True, config={'displayModeBar': False})
+        
     with col_g2:
         if 'ESTADO' in df.columns:
             st.subheader("📌 Estado (% de Avance)")
@@ -217,11 +220,7 @@ else:
                 values='CANTIDAD', 
                 hole=0.35,
                 color='ESTADO',
-                color_discrete_map={
-                    'CONFORME': '#28a745',
-                    'ATENDIDO': '#ffc107',
-                    'PENDIENTE': '#d9534f'
-                }
+                color_discrete_map=color_estados
             )
             fig_pie.update_traces(
                 textposition='inside', 
@@ -233,38 +232,38 @@ else:
                 margin=dict(t=0, b=0, l=0, r=0), 
                 height=320,
                 paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
+                plot_bgcolor='rgba(0,0,0,0)',
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (3D)
-    if 'TERRENO' in df.columns:
+    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Desglosado por Estados)
+    if 'TERRENO' in df.columns and 'ESTADO' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("🌍 Clasificación por Tipo de Terreno")
-        conteo_terreno = df_filtrado['TERRENO'].value_counts().reset_index()
-        conteo_terreno.columns = ['TERRENO', 'CANTIDAD']
         
-        fig_bar_terreno = go.Figure(data=[
-            go.Bar(
-                x=conteo_terreno['TERRENO'],
-                y=conteo_terreno['CANTIDAD'],
-                text=conteo_terreno['CANTIDAD'],
-                textposition='auto',
-                marker=dict(
-                    color=['#5bc0de', '#5cb85c', '#d9534f', '#f0ad4e'],
-                    line=dict(color='#111111', width=2),
-                    opacity=0.95
-                )
-            )
-        ])
+        df_terreno_estado = df_filtrado.groupby(['TERRENO', 'ESTADO']).size().unstack(fill_value=0).reset_index()
+        
+        fig_bar_terreno = go.Figure()
+        for estado in ['PENDIENTE', 'ATENDIDO', 'CONFORME']:
+            if estado in df_terreno_estado.columns:
+                fig_bar_terreno.add_trace(go.Bar(
+                    name=estado,
+                    x=df_terreno_estado['TERRENO'],
+                    y=df_terreno_estado[estado],
+                    marker_color=color_estados.get(estado, '#333333'),
+                    marker_line=dict(color='#111111', width=1.5)
+                ))
+
         fig_bar_terreno.update_layout(
+            barmode='group',
             margin=dict(t=20, b=0, l=0, r=0),
             height=320,
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(title='Tipo de Terreno', showgrid=False, linecolor='black', linewidth=2),
             yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
-            bargap=0.35
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
         )
         st.plotly_chart(fig_bar_terreno, use_container_width=True, config={'displayModeBar': False})
 
