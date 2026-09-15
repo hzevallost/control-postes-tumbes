@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados para tarjetas ejecutivas
+# Estilos CSS personalizados para tarjetas ejecutivas y optimización de espacios
 st.markdown("""
     <style>
         .metric-card {
@@ -39,6 +39,11 @@ st.markdown("""
             color: #212529;
             font-weight: bold;
         }
+        /* Reduce espacio superior innecesario en Streamlit */
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -59,9 +64,22 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# Título Principal actualizado
-st.title("📊 DASHBOARD DE CONTROL DE POSTES")
-st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
+# --- ENCABEZADO SUPERIOR OPTIMIZADO (TÍTULO + LOGOTIPO / IMAGEN) ---
+col_head1, col_head2 = st.columns([3, 1])
+
+with col_head1:
+    st.title("📊 DASHBOARD DE CONTROL DE POSTES")
+    st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
+
+with col_head2:
+    # AQUÍ PUEDES PONER LA RUTA DE TU LOGOTIPO O IMAGEN EN GITHUB (ej: 'logo.png')
+    # O también puedes usar una URL web pública directamente.
+    try:
+        st.image("logo.png", width=220) # Si subes un archivo llamado logo.png a GitHub
+    except:
+        # Imagen de respaldo decorativa institucional si aún no subes el logo
+        st.image("https://images.unsplash.com/photo-1541888946425-d0fbb18f86f7?q=80&w=300&auto=format&fit=crop", width=220, caption="Control de Infraestructura")
+
 st.markdown("---")
 
 if df_raw is None or len(df_raw) == 0:
@@ -154,7 +172,7 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES (INCLUYENDO ESTADO % Y BARRAS 3D REALES) ---
+    # --- GRÁFICAS VISUALES ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
@@ -195,7 +213,6 @@ else:
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
-            # Barras con relieve y efecto de bloque sólido 3D
             fig_bar3d = go.Figure(data=[
                 go.Bar(
                     x=conteo_zonas['ZONA'],
@@ -216,8 +233,7 @@ else:
                 plot_bgcolor='rgba(0,0,0,0)',
                 xaxis=dict(title='Zona', showgrid=False, linecolor='black', linewidth=2),
                 yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
-                bargap=0.35,
-                scene=dict(camera=dict(eye=dict(x=1.8, y=1.8, z=1.8)))
+                bargap=0.35
             )
             st.plotly_chart(fig_bar3d, use_container_width=True)
 
