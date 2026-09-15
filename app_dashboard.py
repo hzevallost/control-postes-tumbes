@@ -7,6 +7,7 @@ Created on Tue Sep 15 12:24:15 2026
 
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 
 # Configuración inicial de la página web del dashboard (modo ancho)
 st.set_page_config(
@@ -46,73 +47,75 @@ sheet_url = "https://docs.google.com/spreadsheets/d/1HTEq01G5xgyMCNrocYvOeKIXTV0
 @st.cache_data(ttl=60)
 def cargar_datos_gsheets(url):
     try:
-        # Leemos el archivo probando la cabecera estándar
-        df = pd.read_csv(url, header=2)
-        
-        # Limpiamos espacios en los nombres de las columnas por si acaso
-        df.columns = df.columns.str.strip().str.upper()
-        
+        df = pd.read_csv(url, header=None)
+        df = df.dropna(how='all')
+        if len(df) > 2:
+            columnas_genericas = [f"COL_{i}" for i in range(df.shape[1])]
+            df.columns = columnas_genericas
         return df, None
     except Exception as e:
         return None, str(e)
 
-df, error_detallado = cargar_datos_gsheets(sheet_url)
+df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
 # Título Principal con estilo
 st.title("📊 Dashboard de Control: Izaje de Postes en Vivo")
 st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
 st.markdown("---")
 
-if df is None or len(df) == 0:
+if df_raw is None or len(df_raw) == 0:
     st.error("No se pudo cargar la información desde Google Sheets.")
     if error_detallado:
         st.info(f"Detalle técnico del error: {error_detallado}")
 else:
-    # Identificamos automáticamente las columnas clave sin importar variaciones menores
-    columnas_disponibles = list(df.columns)
+    df = df_raw.copy()
     
-    # Buscamos nombres aproximados
-    col_poste = next((c for c in columnas_disponibles if 'POSTE' in c or 'CAMARA' in c), columnas_disponibles[1] if len(columnas_disponibles) > 1 else columnas_disponibles[0])
-    col_estado = next((c for c in columnas_disponibles if 'ESTADO' in c), None)
-    col_zona = next((c for c in columnas_disponibles if 'ZONA' in c or 'SECTOR' in c), None)
-    col_terreno = next((c for c in columnas_disponibles if 'TERRENO' in c), None)
+    col_estado_idx = None
+    for col in df.columns:
+        valores_str = df[col].astype(str).str.upper()
+        if valores_str.str.contains('PENDIENTE|OK').any() and col_estado_idx is None:
+            col_estado_idx = col
 
-    # Filtrar filas vacías de la columna principal
-    df = df.dropna(subset=[col_poste])
-    if col_estado:
-        df = df[df[col_estado].astype(str).str.upper() != 'ESTADO']
+    if col_estado_idx is not None:
+        df = df[df[col_estado_idx].astype(str).str.upper().isin(['PENDIENTE', 'OK'])]
+    
+    df = df.reset_index(drop=True)
+    df.index = df.index + 1  # Inicia estrictamente en 1
+
+    if df.shape[1] >= 7:
+        df.columns = ['ZONA', 'N° POSTE / CÁMARA', 'TIPO / ALTURA', 'TERRENO', 'UBICACIÓN / DESCRIPCIÓN', 'OBSERVACIÓN / ACCIÓN', 'ESTADO'] + [f'EXTRA_{i}' for i in range(7, df.shape[1])]
 
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("🔍 Filtros de Búsqueda")
     
     zona_seleccionada = 'TODOS'
-    if col_zona:
-        zonas_disp = ['TODOS'] + list(df[col_zona].dropna().astype(str).unique())
+    if 'ZONA' in df.columns:
+        zonas_disp = ['TODOS'] + list(df['ZONA'].dropna().astype(str).unique())
         zona_seleccionada = st.sidebar.selectbox("Filtrar por Zona / Sector:", zonas_disp)
     
     estado_seleccionado = 'TODOS'
-    if col_estado:
-        estados_disp = ['TODOS'] + list(df[col_estado].dropna().astype(str).unique())
+    if 'ESTADO' in df.columns:
+        estados_disp = ['TODOS'] + list(df['ESTADO'].dropna().astype(str).unique())
         estado_seleccionado = st.sidebar.selectbox("Filtrar por Estado:", estados_disp)
         
     terreno_seleccionado = 'TODOS'
-    if col_terreno:
-        terrenos_disp = ['TODOS'] + list(df[col_terreno].dropna().astype(str).unique())
+    if 'TERRENO' in df.columns:
+        terrenos_disp = ['TODOS'] + list(df['TERRENO'].dropna().astype(str).unique())
         terreno_seleccionado = st.sidebar.selectbox("Filtrar por Tipo de Terreno:", terrenos_disp)
     
-    # Aplicar filtros dinámicos
+    # Aplicar filtros
     df_filtrado = df.copy()
-    if zona_seleccionada != 'TODOS' and col_zona:
-        df_filtrado = df_filtrado[df_filtrado[col_zona].astype(str) == zona_seleccionada]
-    if estado_seleccionado != 'TODOS' and col_estado:
-        df_filtrado = df_filtrado[df_filtrado[col_estado].astype(str) == estado_seleccionado]
-    if terreno_seleccionado != 'TODOS' and col_terreno:
-        df_filtrado = df_filtrado[df_filtrado[col_terreno].astype(str) == terreno_seleccionado]
+    if zona_seleccionada != 'TODOS' and 'ZONA' in df.columns:
+        df_filtrado = df_filtrado[df_filtrado['ZONA'].astype(str) == zona_seleccionada]
+    if estado_seleccionado != 'TODOS' and 'ESTADO' in df.columns:
+        df_filtrado = df_filtrado[df_filtrado['ESTADO'].astype(str) == estado_seleccionado]
+    if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
+        df_filtrado = df_filtrado[df_filtrado['TERRENO'].astype(str) == terreno_seleccionado]
 
     # --- MÉTRICAS PRINCIPALES (KPIs) ---
     total_postes = len(df_filtrado)
-    pendientes = len(df_filtrado[df_filtrado[col_estado].astype(str).str.upper() == 'PENDIENTE']) if col_estado else 0
-    ok = len(df_filtrado[df_filtrado[col_estado].astype(str).str.upper() == 'OK']) if col_estado else 0
+    pendientes = len(df_filtrado[df_filtrado['ESTADO'].astype(str).str.upper() == 'PENDIENTE']) if 'ESTADO' in df.columns else 0
+    ok = len(df_filtrado[df_filtrado['ESTADO'].astype(str).str.upper() == 'OK']) if 'ESTADO' in df.columns else 0
     porcentaje_avance = (ok / total_postes) * 100 if total_postes > 0 else 0
 
     col1, col2, col3, col4 = st.columns(4)
@@ -148,31 +151,57 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES ---
+    # --- GRÁFICAS VISUALES CON PLOTLY (EFECTO MODERNO / 3D INTERACTIVO) ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
-        if col_estado:
-            st.subheader("📌 Proporción de Estados")
-            st.bar_chart(df_filtrado[col_estado].value_counts(), color="#0275d8")
+        if 'ESTADO' in df.columns:
+            st.subheader("📌 Proporción de Estados (Gráfico Circular)")
+            conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
+            conteo_estados.columns = ['ESTADO', 'CANTIDAD']
+            
+            # Gráfico de pastel interactivo moderno con efecto donut de alta calidad visual
+            fig_pie = px.pie(
+                conteo_estados, 
+                names='ESTADO', 
+                values='CANTIDAD', 
+                hole=0.4,
+                color='ESTADO',
+                color_discrete_map={'OK': '#5cb85c', 'PENDIENTE': '#d9534f'}
+            )
+            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+            fig_pie.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=300)
+            st.plotly_chart(fig_pie, use_container_width=True)
         
     with col_g2:
-        if col_zona:
+        if 'ZONA' in df.columns:
             st.subheader("🗺️ Distribución por Zonas")
-            st.bar_chart(df_filtrado[col_zona].value_counts(), color="#f0ad4e")
-        elif col_terreno:
-            st.subheader("🌍 Distribución por Tipo de Terreno")
-            st.bar_chart(df_filtrado[col_terreno].value_counts(), color="#5cb85c")
+            conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
+            conteo_zonas.columns = ['ZONA', 'CANTIDAD']
+            
+            # Gráfico de barras interactivo con sombras y diseño tridimensional limpio
+            fig_bar = px.bar(
+                conteo_zonas, 
+                x='ZONA', 
+                y='CANTIDAD', 
+                text='CANTIDAD',
+                color='ZONA',
+                color_discrete_sequence=['#f0ad4e', '#0275d8', '#5cb85c']
+            )
+            fig_bar.update_traces(texttemplate='%{text}', textposition='outside')
+            fig_bar.update_layout(margin=dict(t=10, b=0, l=0, r=0), height=300, showlegend=False)
+            st.plotly_chart(fig_bar, use_container_width=True)
 
     st.markdown("---")
 
     # --- BUSCADOR RÁPIDO DE POSTE ESPECÍFICO ---
     st.subheader("🔍 Consulta Individual de Poste")
-    lista_postes = list(df[col_poste].astype(str).unique())
+    col_busqueda = 'N° POSTE / CÁMARA' if 'N° POSTE / CÁMARA' in df.columns else df.columns[1]
+    lista_postes = list(df[col_busqueda].astype(str).unique())
     poste_buscado = st.selectbox("Seleccione o busque el número de poste:", ["-- Seleccionar --"] + lista_postes)
     
     if poste_buscado != "-- Seleccionar --":
-        datos_poste = df[df[col_poste].astype(str) == str(poste_buscado)]
+        datos_poste = df[df[col_busqueda].astype(str) == str(poste_buscado)]
         st.dataframe(datos_poste, use_container_width=True)
 
     st.markdown("---")
