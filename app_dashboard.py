@@ -154,17 +154,49 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES CON TÉCNICA 3D REAL ---
+    # --- GRÁFICAS VISUALES (INCLUYENDO ESTADO % Y BARRAS 3D REALES) ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
+        if 'ESTADO' in df.columns:
+            st.subheader("📌 Estado (%)")
+            conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
+            conteo_estados.columns = ['ESTADO', 'CANTIDAD']
+            
+            fig_pie = px.pie(
+                conteo_estados, 
+                names='ESTADO', 
+                values='CANTIDAD', 
+                hole=0.35,
+                color='ESTADO',
+                color_discrete_map={
+                    'CONFORME': '#28a745',
+                    'ATENDIDO': '#ffc107',
+                    'PENDIENTE': '#d9534f'
+                }
+            )
+            fig_pie.update_traces(
+                textposition='inside', 
+                textinfo='percent+label',
+                pull=[0.05, 0, 0], 
+                marker=dict(line=dict(color='#000000', width=1))
+            )
+            fig_pie.update_layout(
+                margin=dict(t=0, b=0, l=0, r=0), 
+                height=320,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
+            st.plotly_chart(fig_pie, use_container_width=True)
+        
+    with col_g2:
         if 'ZONA' in df.columns:
-            st.subheader("🗺️ Distribución por Zonas (3D Real)")
+            st.subheader("🗺️ Distribución por Zonas (3D)")
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
-            # Gráfico 3D Cúbico con Go.Mesh3d / Bar con profundidad volumétrica
-            fig_bar3d_zona = go.Figure(data=[
+            # Barras con relieve y efecto de bloque sólido 3D
+            fig_bar3d = go.Figure(data=[
                 go.Bar(
                     x=conteo_zonas['ZONA'],
                     y=conteo_zonas['CANTIDAD'],
@@ -172,52 +204,53 @@ else:
                     textposition='auto',
                     marker=dict(
                         color=['#f0ad4e', '#0275d8', '#5cb85c'],
-                        line=dict(color='#000000', width=2),
-                        opacity=0.9
+                        line=dict(color='#111111', width=2),
+                        opacity=0.95
                     )
                 )
             ])
-            # Aplicamos una perspectiva isométrica simulando 3D volumétrico avanzado
-            fig_bar3d_zona.update_layout(
+            fig_bar3d.update_layout(
                 margin=dict(t=20, b=0, l=0, r=0),
                 height=320,
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(title='Zona', showgrid=False),
-                yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#e0e0e0'),
-                bargap=0.3
+                xaxis=dict(title='Zona', showgrid=False, linecolor='black', linewidth=2),
+                yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
+                bargap=0.35,
+                scene=dict(camera=dict(eye=dict(x=1.8, y=1.8, z=1.8)))
             )
-            st.plotly_chart(fig_bar3d_zona, use_container_width=True)
+            st.plotly_chart(fig_bar3d, use_container_width=True)
 
-    with col_g2:
-        if 'TERRENO' in df.columns:
-            st.subheader("🌍 Clasificación por Tipo de Terreno (3D Real)")
-            conteo_terreno = df_filtrado['TERRENO'].value_counts().reset_index()
-            conteo_terreno.columns = ['TERRENO', 'CANTIDAD']
-            
-            fig_bar3d_terreno = go.Figure(data=[
-                go.Bar(
-                    x=conteo_terreno['TERRENO'],
-                    y=conteo_terreno['CANTIDAD'],
-                    text=conteo_terreno['CANTIDAD'],
-                    textposition='auto',
-                    marker=dict(
-                        color=['#5bc0de', '#5cb85c', '#d9534f', '#f0ad4e'],
-                        line=dict(color='#000000', width=2),
-                        opacity=0.9
-                    )
+    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (3D)
+    if 'TERRENO' in df.columns:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.subheader("🌍 Clasificación por Tipo de Terreno (3D)")
+        conteo_terreno = df_filtrado['TERRENO'].value_counts().reset_index()
+        conteo_terreno.columns = ['TERRENO', 'CANTIDAD']
+        
+        fig_bar_terreno = go.Figure(data=[
+            go.Bar(
+                x=conteo_terreno['TERRENO'],
+                y=conteo_terreno['CANTIDAD'],
+                text=conteo_terreno['CANTIDAD'],
+                textposition='auto',
+                marker=dict(
+                    color=['#5bc0de', '#5cb85c', '#d9534f', '#f0ad4e'],
+                    line=dict(color='#111111', width=2),
+                    opacity=0.95
                 )
-            ])
-            fig_bar3d_terreno.update_layout(
-                margin=dict(t=20, b=0, l=0, r=0),
-                height=320,
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(title='Tipo de Terreno', showgrid=False),
-                yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#e0e0e0'),
-                bargap=0.3
             )
-            st.plotly_chart(fig_bar3d_terreno, use_container_width=True)
+        ])
+        fig_bar_terreno.update_layout(
+            margin=dict(t=20, b=0, l=0, r=0),
+            height=320,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            xaxis=dict(title='Tipo de Terreno', showgrid=False, linecolor='black', linewidth=2),
+            yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
+            bargap=0.35
+        )
+        st.plotly_chart(fig_bar_terreno, use_container_width=True)
 
     st.markdown("---")
 
