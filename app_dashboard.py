@@ -2,12 +2,11 @@
 """
 Created on Tue Sep 15 12:24:15 2026
 
-@author: Henry
+@author: Henry Z
 """
 
 import pandas as pd
 import streamlit as st
-import os
 
 # Configuración inicial de la página web del dashboard
 st.set_page_config(
@@ -16,27 +15,28 @@ st.set_page_config(
     layout="wide"
 )
 
-# BUSCAR EL ARCHIVO EN LA MISMA CARPETA DONDE ESTÁ ESTE SCRIPT
-ruta_archivo = 'OBSERVACIONES DEL IZAJE DE POSTES.xlsx'
+# Enlace de tu Google Sheet actualizado
+sheet_url = "https://docs.google.com/spreadsheets/d/1HTEq01G5xgyMCNroCYvOeKIXTV0xhsKg/export?format=csv&gid=1516365925"
 
-# Función para cargar datos de forma limpia
-@st.cache_data
-def cargar_datos(path):
-    if not os.path.exists(path):
+# Función para cargar datos directamente desde Google Sheets en vivo
+@st.cache_data(ttl=60) # Se actualiza automáticamente cada 60 segundos si editas la hoja
+def cargar_datos_gsheets(url):
+    try:
+        df = pd.read_csv(url, header=2)
+        df = df.dropna(subset=['N° DE POSTE/CAMARA', 'ESTADO'])
+        df = df[df['ESTADO'] != 'ESTADO']
+        return df
+    except Exception as e:
         return None
-    df = pd.read_excel(path, header=2)
-    df = df.dropna(subset=['N° DE POSTE/CAMARA', 'ESTADO'])
-    df = df[df['ESTADO'] != 'ESTADO']
-    return df
 
-df = cargar_datos(ruta_archivo)
+df = cargar_datos_gsheets(sheet_url)
 
 # Título principal
-st.title("📊 Dashboard de Control: Izaje de Postes")
+st.title("📊 Dashboard de Control: Izaje de Postes (En Vivo)")
 st.markdown("---")
 
-if df is None:
-    st.error(f"No se encontró el archivo '{ruta_archivo}' en la carpeta del proyecto. Asegúrate de subirlo a GitHub junto con este código.")
+if df is None or len(df) == 0:
+    st.error("No se pudo cargar la información. Asegúrate de que el Google Sheet sea público.")
 else:
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("Filtros de Búsqueda")
@@ -86,6 +86,6 @@ else:
     st.subheader(f"📋 Detalle de Registros ({len(df_filtrado)} postes encontrados)")
     st.dataframe(df_filtrado, use_container_width=True)
     
-    if st.button("🔄 Actualizar Datos"):
+    if st.button("🔄 Refrescar Datos de la Web"):
         st.cache_data.clear()
         st.rerun()
