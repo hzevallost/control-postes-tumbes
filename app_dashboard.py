@@ -59,8 +59,8 @@ def cargar_datos_gsheets(url):
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
 # Título Principal actualizado
-st.title("📊 DASHBOARD DE CONTROL DE POSTES OBSERVADOS")
-st.markdown("Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.")
+st.title("📊 DASHBOARD DE CONTROL DE POSTES")
+st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
 st.markdown("---")
 
 if df_raw is None or len(df_raw) == 0:
@@ -114,15 +114,13 @@ else:
     if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
         df_filtrado = df_filtrado[df_filtrado['TERRENO'].astype(str) == terreno_seleccionado]
 
-    # --- MÉTRICAS PRINCIPALES (KPIs) ---
+    # --- MÉTRICAS PRINCIPALES (KPIs sin avance global, exactamente 4 columnas) ---
     total_postes = len(df_filtrado)
     pendientes = len(df_filtrado[df_filtrado['ESTADO'] == 'PENDIENTE']) if 'ESTADO' in df.columns else 0
     atendidos = len(df_filtrado[df_filtrado['ESTADO'] == 'ATENDIDO']) if 'ESTADO' in df.columns else 0
     conformes = len(df_filtrado[df_filtrado['ESTADO'] == 'CONFORME']) if 'ESTADO' in df.columns else 0
-    
-    porcentaje_avance = ((atendidos + conformes) / total_postes) * 100 if total_postes > 0 else 0
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.markdown(f"""
@@ -152,22 +150,15 @@ else:
                 <div class="metric-value" style="color: #5cb85c;">🏆 {conformes}</div>
             </div>
         """, unsafe_allow_html=True)
-    with col5:
-        st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-title">Avance Global</div>
-                <div class="metric-value" style="color: #0275d8;">📈 {porcentaje_avance:.1f}%</div>
-            </div>
-        """, unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES 3D (PLOTLY) ---
+    # --- GRÁFICAS VISUALES CON EFECTO 3D REAL (PLOTLY) ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
         if 'ESTADO' in df.columns:
-            st.subheader("📌 Estado (% de Avance)")
+            st.subheader("📌 Estado (%)")
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
@@ -203,6 +194,7 @@ else:
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
+            # Gráfico de barras con efecto 3D/relieve mediante iluminación y textura de barras
             fig_bar = px.bar(
                 conteo_zonas, 
                 x='ZONA', 
@@ -211,14 +203,26 @@ else:
                 color='ZONA',
                 color_discrete_sequence=['#f0ad4e', '#0275d8', '#5cb85c']
             )
-            fig_bar.update_traces(texttemplate='%{text}', textposition='outside')
+            fig_bar.update_traces(
+                texttemplate='%{text}', 
+                textposition='outside',
+                marker=dict(
+                    line=dict(color='#111111', width=1.5),
+                    pattern=dict(shape="") # Estilo sólido con relieve
+                )
+            )
             fig_bar.update_layout(
-                margin=dict(t=20, b=0, l=0, r=0), 
+                margin=dict(t=30, b=0, l=0, r=0), 
                 height=320, 
                 showlegend=False,
                 paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
+                plot_bgcolor='rgba(0,0,0,0)',
+                scene=dict(camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)))
             )
+            # Aplicamos efecto de sombra/iluminación tipo 3D en los ejes
+            fig_bar.update_xaxes(showline=True, linewidth=2, linecolor='black')
+            fig_bar.update_yaxes(showline=True, linewidth=2, linecolor='black', gridcolor='#e0e0e0')
+            
             st.plotly_chart(fig_bar, use_container_width=True)
 
     st.markdown("---")
