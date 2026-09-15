@@ -54,10 +54,8 @@ st.markdown("""
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
-        
-        /* Control responsivo universal para que las imágenes se adapten al celular */
         img {
-            max-width: 140px !important;
+            max-width: 150px !important;
             height: auto !important;
         }
     </style>
@@ -80,12 +78,12 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR NATIVO Y SEGURO ---
-col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
+# --- ENCABEZADO SUPERIOR SIMPLIFICADO (SOLO QUANTUM Y TÍTULO) ---
+col_logo, col_title = st.columns([1, 3.5])
 
-with col_logo1:
+with col_logo:
     try:
-        st.image("quantum.png", width=150)
+        st.image("quantum.png", width=160)
     except:
         st.write("Logo Quantum no encontrado")
 
@@ -96,12 +94,6 @@ with col_title:
             <p style='color: #6c757d; margin-top: 5px; font-size: calc(0.8rem + 0.3vw);'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
         </div>
     """, unsafe_allow_html=True)
-
-with col_logo2:
-    try:
-        st.image("logo.png", width=120)
-    except:
-        st.write("Logo Municipalidad no encontrado")
 
 st.markdown("---")
 
