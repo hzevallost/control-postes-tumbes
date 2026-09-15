@@ -10,7 +10,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import io
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -343,43 +343,56 @@ else:
             use_container_width=True
         )
 
-    # 2. Botón para Exportar a PDF
+    # 2. Botón para Exportar a PDF (Formato Horizontal / Landscape optimizado)
     with col_exp2:
         def generar_pdf(data_df, total, pend, aten, conf):
             buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            # Formato horizontal (landscape) para que entren todas las columnas holgadamente
+            doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
             elements = []
             
             styles = getSampleStyleSheet()
-            titulo_estilo = ParagraphStyle('Titulo', parent=styles['Heading1'], fontSize=16, alignment=1, textColor=colors.HexColor('#212529'))
+            titulo_estilo = ParagraphStyle('Titulo', parent=styles['Heading1'], fontSize=15, alignment=1, textColor=colors.HexColor('#212529'))
             sub_estilo = ParagraphStyle('Sub', parent=styles['Normal'], fontSize=10, alignment=1, textColor=colors.HexColor('#6c757d'))
             
             elements.append(Paragraph("<b>REPORTE DE CONTROL DE POSTES OBSERVADOS</b>", titulo_estilo))
             elements.append(Paragraph("Consorcio Quantum SC Tumbes", sub_estilo))
-            elements.append(Spacer(1, 15))
+            elements.append(Spacer(1, 10))
             
             # Resumen de KPIs
             kpi_text = f"<b>Total Registros:</b> {total} &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#d9534f'><b>Pendientes:</b> {pend}</font> &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#7f6000'><b>Atendidos:</b> {aten}</font> &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#274e13'><b>Conformes:</b> {conf}</font>"
             elements.append(Paragraph(kpi_text, ParagraphStyle('KPI', parent=styles['Normal'], fontSize=10, alignment=1)))
-            elements.append(Spacer(1, 15))
+            elements.append(Spacer(1, 12))
             
-            # Tabla de datos
-            table_data = [list(data_df.columns)]
+            # Envolver el texto de las celdas en párrafos para que se ajusten automáticamente al ancho
+            estilo_celda = ParagraphStyle('Celda', parent=styles['Normal'], fontSize=8, textColor=colors.HexColor('#212529'))
+            estilo_cabecera = ParagraphStyle('Cabecera', parent=styles['Normal'], fontSize=8, fontName='Helvetica-Bold', textColor=colors.whitesmoke, alignment=1)
+            
+            table_data = []
+            # Cabeceras
+            header_row = [Paragraph(str(col), estilo_cabecera) for col in data_df.columns]
+            table_data.append(header_row)
+            
+            # Filas
             for _, row in data_df.iterrows():
-                table_data.append([str(val) for val in row])
+                row_cells = [Paragraph(str(val), estilo_celda) for val in row]
+                table_data.append(row_cells)
                 
-            t = Table(table_data, repeatRows=1)
+            # Anchos personalizados para las columnas en la hoja horizontal (Ancho total aprox 730 pt)
+            # ZONA, N° POSTE, TIPO/ALTURA, TERRENO, JUSTIFICACIÓN, OBSERVACIÓN/ACCIÓN, ESTADO
+            col_widths = [75, 55, 65, 75, 180, 225, 60]
+            if len(col_widths) != len(data_df.columns):
+                col_widths = None # Automático si cambian las columnas
+                
+            t = Table(table_data, colWidths=col_widths, repeatRows=1)
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#343a40')),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0,0), (-1,0), 8),
-                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+                ('TOPPADDING', (0,0), (-1,-1), 6),
                 ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8f9fa')),
                 ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dee2e6')),
-                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
-                ('FONTSIZE', (0,1), (-1,-1), 7),
             ]))
             elements.append(t)
             doc.build(elements)
