@@ -28,7 +28,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS avanzados con cabecera responsiva por Flexbox para PC y Celulares
+# Estilos CSS optimizados para tarjetas y control responsivo de imágenes
 st.markdown("""
     <style>
         .metric-card {
@@ -55,44 +55,10 @@ st.markdown("""
             padding-bottom: 2rem;
         }
         
-        /* CABECERA RESPONSIVA PROFESIONAL (FLEXBOX) */
-        .header-flex {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        .header-logo-left {
-            flex: 1;
-            text-align: left;
-        }
-        .header-title-center {
-            flex: 3;
-            text-align: center;
-        }
-        .header-logo-right {
-            flex: 1;
-            text-align: right;
-        }
-        .header-logo-left img, .header-logo-right img {
-            max-width: 140px;
-            height: auto;
-        }
-
-        /* Regla estricta para celulares en posición vertical */
-        @media (max-width: 768px) {
-            .header-flex {
-                flex-direction: column !important;
-                text-align: center !important;
-            }
-            .header-logo-left, .header-logo-right {
-                text-align: center !important;
-                margin: 5px 0;
-            }
-            .header-logo-left img, .header-logo-right img {
-                max-width: 110px !important;
-            }
+        /* Control responsivo universal para que las imágenes se adapten al celular */
+        img {
+            max-width: 140px !important;
+            height: auto !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -114,21 +80,28 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR RESPONSIVO HTML/CSS ---
-st.markdown("""
-    <div class="header-flex">
-        <div class="header-logo-left">
-            <img src="app/static/quantum.png" onerror="this.src='quantum.png'" style="width: 150px;">
-        </div>
-        <div class="header-title-center">
+# --- ENCABEZADO SUPERIOR NATIVO Y SEGURO ---
+col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
+
+with col_logo1:
+    try:
+        st.image("quantum.png", width=150)
+    except:
+        st.write("Logo Quantum no encontrado")
+
+with col_title:
+    st.markdown("""
+        <div style='text-align: center;'>
             <h2 style='color: #212529; margin-bottom: 0px; font-size: calc(1.1rem + 1vw);'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
             <p style='color: #6c757d; margin-top: 5px; font-size: calc(0.8rem + 0.3vw);'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
         </div>
-        <div class="header-logo-right">
-            <img src="app/static/logo.png" onerror="this.src='logo.png'" style="width: 125px;">
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+with col_logo2:
+    try:
+        st.image("logo.png", width=120)
+    except:
+        st.write("Logo Municipalidad no encontrado")
 
 st.markdown("---")
 
