@@ -64,18 +64,24 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR OPTIMIZADO (TÍTULO + LOGOTIPO / IMAGEN) ---
-col_head1, col_head2 = st.columns([3, 1])
+# --- ENCABEZADO SUPERIOR CON TÍTULO Y LOS DOS LOGOTIPOS ---
+col_title, col_logo1, col_logo2 = st.columns([2.5, 1, 1])
 
-with col_head1:
+with col_title:
     st.title("📊 DASHBOARD CONTROL DE POSTES OBSERVADOS")
     st.markdown("Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.")
 
-with col_head2:
+with col_logo1:
     try:
-        st.image("logo.png", width=220)
+        st.image("quantum.png", width=180) # Logo de Consorcio Quantum
     except:
-        st.image("https://images.unsplash.com/photo-1541888946425-d0fbb18f86f7?q=80&w=300&auto=format&fit=crop", width=220, caption="Control de Infraestructura")
+        st.write("Logo Quantum no encontrado")
+
+with col_logo2:
+    try:
+        st.image("logo.png", width=180) # Logo de la Municipalidad
+    except:
+        st.write("Logo Municipalidad no encontrado")
 
 st.markdown("---")
 
