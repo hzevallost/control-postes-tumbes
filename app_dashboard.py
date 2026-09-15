@@ -10,6 +10,10 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import io
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')  # Configuración segura para servidor en la nube
+
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from reportlab.lib.pagesizes import letter, landscape
@@ -200,10 +204,6 @@ else:
         'ATENDIDO': '#ffc107',
         'CONFORME': '#28a745'
     }
-
-    fig_bar_zona = None
-    fig_pie = None
-    fig_bar_terreno = None
 
     with col_g1:
         if 'ZONA' in df.columns and 'ESTADO' in df.columns:
@@ -408,9 +408,9 @@ else:
         except Exception as e:
             st.error(f"Error al generar Excel: {e}")
 
-    # 2. Botón para Exportar a PDF (Incluyendo Gráficos y Tabla Completa)
+    # 2. Botón para Exportar a PDF (Con Gráficos de Matplotlib 100% Compatibles)
     with col_exp2:
-        def generar_pdf_con_graficos(data_df, total, pend, aten, conf, f_zona, f_pie, f_terreno):
+        def generar_pdf_con_matplot(data_df, total, pend, aten, conf):
             buffer = io.BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
             elements = []
@@ -428,33 +428,52 @@ else:
             elements.append(Paragraph(kpi_text, ParagraphStyle('KPI', parent=styles['Normal'], fontSize=10, alignment=1)))
             elements.append(Spacer(1, 15))
 
-            # Sección de Gráficos Estadísticos
-            elements.append(Paragraph("<b>📈 Resumen Gráfico de Avance</b>", seccion_estilo))
-            
-            graficos_imgs = []
+            # --- GENERAR GRÁFICOS CON MATPLOTLIB ---
+            img_buf_1, img_buf_2 = None, None
             try:
-                if f_zona:
-                    img_bytes_1 = f_zona.to_image(format="png", width=400, height=220, scale=2)
-                    graficos_imgs.append(RLImage(io.BytesIO(img_bytes_1), width=230, height=125))
-                if f_pie:
-                    img_bytes_2 = f_pie.to_image(format="png", width=400, height=220, scale=2)
-                    graficos_imgs.append(RLImage(io.BytesIO(img_bytes_2), width=230, height=125))
-                if f_terreno:
-                    img_bytes_3 = f_terreno.to_image(format="png", width=400, height=220, scale=2)
-                    graficos_imgs.append(RLImage(io.BytesIO(img_bytes_3), width=230, height=125))
+                # Gráfico 1: Estado (Pastel)
+                if 'ESTADO' in data_df.columns and len(data_df) > 0:
+                    fig, ax = plt.subplots(figsize=(4, 2.2))
+                    conteo = data_df['ESTADO'].value_counts()
+                    colores_pie = ['#d9534f' if x=='PENDIENTE' else '#ffc107' if x=='ATENDIDO' else '#28a745' for x in conteo.index]
+                    ax.pie(conteo, labels=conteo.index, colors=colores_pie, autopct='%1.1f%%', startangle=90, textprops={'fontsize': 8})
+                    ax.set_title("Distribución por Estado", fontsize=9, fontweight='bold')
+                    plt.tight_layout()
+                    
+                    img_buf_1 = io.BytesIO()
+                    plt.savefig(img_buf_1, format='png', dpi=150, bbox_inches='tight')
+                    img_buf_1.seek(0)
+                    plt.close(fig)
+
+                # Gráfico 2: Zona (Barras)
+                if 'ZONA' in data_df.columns and len(data_df) > 0:
+                    fig, ax = plt.subplots(figsize=(4.5, 2.2))
+                    conteo_zona = data_df['ZONA'].value_counts()
+                    ax.bar(conteo_zona.index.astype(str), conteo_zona.values, color='#0275d8')
+                    ax.set_title("Registros por Zona", fontsize=9, fontweight='bold')
+                    ax.tick_params(axis='x', rotation=15, labelsize=8)
+                    ax.tick_params(axis='y', labelsize=8)
+                    plt.tight_layout()
+                    
+                    img_buf_2 = io.BytesIO()
+                    plt.savefig(img_buf_2, format='png', dpi=150, bbox_inches='tight')
+                    img_buf_2.seek(0)
+                    plt.close(fig)
             except Exception as e:
                 pass
 
-            if graficos_imgs:
-                # Organizar gráficos en pares dentro de una tabla de PDF
-                table_grafs_data = []
-                for i in range(0, len(graficos_imgs), 2):
-                    row_imgs = graficos_imgs[i:i+2]
-                    if len(row_imgs) == 1:
-                        row_imgs.append('')
-                    table_grafs_data.append(row_imgs)
-                
-                t_grafs = Table(table_grafs_data, colWidths=[360, 360])
+            # Insertar gráficos en el PDF si se generaron con éxito
+            elements.append(Paragraph("<b>📈 Resumen Estadístico de Avance</b>", seccion_estilo))
+            img_elements = []
+            if img_buf_1:
+                img_elements.append(RLImage(img_buf_1, width=220, height=120))
+            if img_buf_2:
+                img_elements.append(RLImage(img_buf_2, width=240, height=120))
+            
+            if img_elements:
+                while len(img_elements) < 2:
+                    img_elements.append('')
+                t_grafs = Table([img_elements], colWidths=[360, 360])
                 t_grafs.setStyle(TableStyle([
                     ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                     ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -496,7 +515,7 @@ else:
             return buffer.getvalue()
 
         try:
-            pdf_data = generar_pdf_con_graficos(df_filtrado, total_postes, pendientes, atendidos, conformes, fig_bar_zona, fig_pie, fig_bar_terreno)
+            pdf_data = generar_pdf_con_matplot(df_filtrado, total_postes, pendientes, atendidos, conformes)
             st.download_button(
                 label="📄 Descargar Reporte Ejecutivo con Gráficos en PDF",
                 data=pdf_data,
@@ -505,7 +524,7 @@ else:
                 use_container_width=True
             )
         except Exception as e:
-            st.info("Para incluir los gráficos en el PDF, asegúrate de tener instaladas las librerías 'reportlab' y 'kaleido' en tu archivo requirements.txt de GitHub.")
+            st.info(f"Detalle del PDF: {e}")
 
     # Botón de refresco manual
     st.markdown("<br>", unsafe_allow_html=True)
