@@ -63,12 +63,12 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR: LOGO IZQUIERDA, TÍTULO CENTRADO, LOGO DERECHA ---
+# --- ENCABEZADO SUPERIOR RESPONSIVO (USANDO use_container_width=True) ---
 col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
 
 with col_logo1:
     try:
-        st.image("quantum.png", width=170) # Carga nativa segura
+        st.image("quantum.png", use_container_width=True) # Se adapta automáticamente al ancho del celular/PC
     except:
         st.write("Logo Quantum no encontrado")
 
@@ -82,7 +82,7 @@ with col_title:
 
 with col_logo2:
     try:
-        st.image("logo.png", width=150) # Carga nativa segura
+        st.image("logo.png", use_container_width=True) # Se adapta automáticamente al ancho del celular/PC
     except:
         st.write("Logo Municipalidad no encontrado")
 
