@@ -9,6 +9,11 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 # Configuración inicial de la página web del dashboard (modo ancho)
 st.set_page_config(
@@ -17,7 +22,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados (incluye regla responsiva para logos adaptables a celulares)
+# Estilos CSS personalizados
 st.markdown("""
     <style>
         .metric-card {
@@ -43,7 +48,6 @@ st.markdown("""
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
-        /* Regla responsiva: en pantallas de PC se ven con un ancho máximo controlado, y en celulares se achican fluidamente */
         img {
             max-width: 150px !important;
             height: auto !important;
@@ -319,8 +323,83 @@ else:
     
     df_filtrado_estilizado = df_filtrado.style.apply(resaltar_filas, axis=1)
     st.dataframe(df_filtrado_estilizado, use_container_width=True)
-    
+
+    # --- SECCIÓN DE EXPORTACIÓN DE REPORTES ---
+    st.markdown("### 📥 Exportar Reportes de Obra")
+    col_exp1, col_exp2 = st.columns(2)
+
+    # 1. Botón para Exportar a EXCEL
+    with col_exp1:
+        output_excel = io.BytesIO()
+        with pd.ExcelWriter(output_excel, engine='openpyxl') as writer:
+            df_filtrado.to_excel(writer, index=False, sheet_name='Reporte Postes')
+        excel_data = output_excel.getvalue()
+
+        st.download_button(
+            label="📊 Descargar Reporte en Excel (.xlsx)",
+            data=excel_data,
+            file_name="reporte_control_postes.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
+
+    # 2. Botón para Exportar a PDF
+    with col_exp2:
+        def generar_pdf(data_df, total, pend, aten, conf):
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            elements = []
+            
+            styles = getSampleStyleSheet()
+            titulo_estilo = ParagraphStyle('Titulo', parent=styles['Heading1'], fontSize=16, alignment=1, textColor=colors.HexColor('#212529'))
+            sub_estilo = ParagraphStyle('Sub', parent=styles['Normal'], fontSize=10, alignment=1, textColor=colors.HexColor('#6c757d'))
+            
+            elements.append(Paragraph("<b>REPORTE DE CONTROL DE POSTES OBSERVADOS</b>", titulo_estilo))
+            elements.append(Paragraph("Consorcio Quantum SC Tumbes", sub_estilo))
+            elements.append(Spacer(1, 15))
+            
+            # Resumen de KPIs
+            kpi_text = f"<b>Total Registros:</b> {total} &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#d9534f'><b>Pendientes:</b> {pend}</font> &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#7f6000'><b>Atendidos:</b> {aten}</font> &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#274e13'><b>Conformes:</b> {conf}</font>"
+            elements.append(Paragraph(kpi_text, ParagraphStyle('KPI', parent=styles['Normal'], fontSize=10, alignment=1)))
+            elements.append(Spacer(1, 15))
+            
+            # Tabla de datos
+            table_data = [list(data_df.columns)]
+            for _, row in data_df.iterrows():
+                table_data.append([str(val) for val in row])
+                
+            t = Table(table_data, repeatRows=1)
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#343a40')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0,0), (-1,0), 8),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8f9fa')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dee2e6')),
+                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,1), (-1,-1), 7),
+            ]))
+            elements.append(t)
+            doc.build(elements)
+            buffer.seek(0)
+            return buffer.getvalue()
+
+        try:
+            pdf_data = generar_pdf(df_filtrado, total_postes, pendientes, atendidos, conformes)
+            st.download_button(
+                label="📄 Descargar Reporte Ejecutivo en PDF",
+                data=pdf_data,
+                file_name="reporte_control_postes.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.info("Para habilitar la descarga en PDF, asegúrate de incluir 'reportlab' en tu archivo requirements.txt de GitHub.")
+
     # Botón de refresco manual
+    st.markdown("<br>", unsafe_allow_html=True)
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
     with col_btn2:
         if st.button("🔄 Refrescar Datos en Vivo desde Google Sheets", use_container_width=True):
