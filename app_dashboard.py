@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados
+# Estilos CSS personalizados para optimizar visualización en PC y Celulares
 st.markdown("""
     <style>
         .metric-card {
@@ -43,6 +43,14 @@ st.markdown("""
             padding-top: 3.5rem;
             padding-bottom: 2rem;
         }
+        /* Estilo para alinear y contener los logos perfectamente en cualquier dispositivo */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -63,28 +71,31 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR CON TÍTULO CENTRADO Y LOGOS EQUILIBRADOS ---
-col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
+# --- ENCABEZADO SUPERIOR PERFECTAMENTE ORGANIZADO ---
+# 1. Título principal centrado primero (se ve arriba tanto en PC como en Celular)
+st.markdown("""
+    <div style='text-align: center;'>
+        <h2 style='color: #212529; margin-bottom: 0px;'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
+        <p style='color: #6c757d; margin-top: 5px; font-size: 16px;'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
+    </div>
+""", unsafe_allow_html=True)
 
-with col_logo1:
-    try:
-        st.image("quantum.png", width=170) # Logo de Quantum
-    except:
-        st.write("Logo Quantum no encontrado")
+st.markdown("<br>", unsafe_allow_html=True)
 
-with col_title:
-    st.markdown("""
-        <div style='text-align: center;'>
-            <h2 style='color: #212529; margin-bottom: 0px;'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
-            <p style='color: #6c757d; margin-top: 5px; font-size: 16px;'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-with col_logo2:
-    try:
-        st.image("logo.png", width=150) # Logo de la Municipalidad (tamaño corregido a 150)
-    except:
-        st.write("Logo Municipalidad no encontrado")
+# 2. Ambos logotipos juntos lado a lado debajo del título (centrados y con el mismo balance)
+col_l1, col_center, col_l2 = st.columns([1, 2, 1])
+with col_center:
+    cols_logos = st.columns(2)
+    with cols_logos[0]:
+        try:
+            st.image("quantum.png", width=150)
+        except:
+            st.write("Quantum no encontrado")
+    with cols_logos[1]:
+        try:
+            st.image("logo.png", width=130)
+        except:
+            st.write("Muni no encontrado")
 
 st.markdown("---")
 
