@@ -59,7 +59,7 @@ def cargar_datos_gsheets(url):
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
 # Título Principal actualizado
-st.title("📊 DASHBOARD DE CONTROL DE POSTES")
+st.title("📊 DASHBOARD DE CONTROL DE POSTES OBSERVADOS")
 st.markdown("Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.")
 st.markdown("---")
 
