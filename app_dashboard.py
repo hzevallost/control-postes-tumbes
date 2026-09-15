@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados para tarjetas ejecutivas y optimización de espacios
+# Estilos CSS personalizados (incluye regla responsiva para logos adaptables a celulares)
 st.markdown("""
     <style>
         .metric-card {
@@ -43,6 +43,14 @@ st.markdown("""
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
+        /* Regla responsiva: en pantallas de PC se ven con un ancho máximo controlado, y en celulares se achican fluidamente */
+        img {
+            max-width: 150px !important;
+            height: auto !important;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -63,12 +71,12 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR RESPONSIVO (USANDO use_container_width=True) ---
+# --- ENCABEZADO SUPERIOR ---
 col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
 
 with col_logo1:
     try:
-        st.image("quantum.png", use_container_width=True) # Se adapta automáticamente al ancho del celular/PC
+        st.image("quantum.png", width=160)
     except:
         st.write("Logo Quantum no encontrado")
 
@@ -82,7 +90,7 @@ with col_title:
 
 with col_logo2:
     try:
-        st.image("logo.png", use_container_width=True) # Se adapta automáticamente al ancho del celular/PC
+        st.image("logo.png", width=130)
     except:
         st.write("Logo Municipalidad no encontrado")
 
