@@ -272,7 +272,7 @@ else:
 
     # --- BUSCADOR RÁPIDO DE POSTE ESPECÍFICO ---
     st.subheader("🔍 Consulta Individual de Poste")
-    col_busqueda = 'N° POSTE / CÁMARA' if 'N° POSTE / CÁMARA' in df.columns else df.columns[1]
+    col_busqueda = 'N° POSTE' if 'N° POSTE' in df.columns else df.columns[1]
     lista_postes = list(df[col_busqueda].astype(str).unique())
     poste_buscado = st.selectbox("Seleccione o busque el número de poste:", ["-- Seleccionar --"] + lista_postes)
     
