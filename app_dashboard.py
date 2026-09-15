@@ -15,28 +15,28 @@ st.set_page_config(
     layout="wide"
 )
 
-# Enlace de tu Google Sheet actualizado
-sheet_url = "https://docs.google.com/spreadsheets/d/1HTEq01G5xgyMCNroCYvOeKIXTV0xhsKg/export?format=csv&gid=1516365925"
+# PEGA AQUÍ EL ENLACE CSV OBTENIDO DE "PUBLICAR EN LA WEB"
+sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTKr-q0vtewH2ya17kZjYnTNxW9JS-9kp1ZDtFjGqx7LQcXycDd_Gk_VrnPXS3NTA/pub?output=csv"
 
-# Función para cargar datos directamente desde Google Sheets en vivo
-@st.cache_data(ttl=60) # Se actualiza automáticamente cada 60 segundos si editas la hoja
+@st.cache_data(ttl=60)
 def cargar_datos_gsheets(url):
     try:
         df = pd.read_csv(url, header=2)
         df = df.dropna(subset=['N° DE POSTE/CAMARA', 'ESTADO'])
         df = df[df['ESTADO'] != 'ESTADO']
-        return df
+        return df, None
     except Exception as e:
-        return None
+        return None, str(e)
 
-df = cargar_datos_gsheets(sheet_url)
+df, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# Título principal
 st.title("📊 Dashboard de Control: Izaje de Postes (En Vivo)")
 st.markdown("---")
 
 if df is None or len(df) == 0:
-    st.error("No se pudo cargar la información. Asegúrate de que el Google Sheet sea público.")
+    st.error("No se pudo cargar la información desde Google Sheets.")
+    if error_detallado:
+        st.info(f"Detalle técnico del error: {error_detallado}")
 else:
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("Filtros de Búsqueda")
