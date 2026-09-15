@@ -16,8 +16,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# Ruta de tu archivo Excel
-ruta_archivo = r'C:\Users\Henry\Documents\HZT\QUANTUM\TUMBES\EJECUCION\PLANTADO DE POSTES\OBSERVACIONES DEL IZAJE DE POSTES.xlsx'
+# BUSCAR EL ARCHIVO EN LA MISMA CARPETA DONDE ESTÁ ESTE SCRIPT
+ruta_archivo = 'OBSERVACIONES DEL IZAJE DE POSTES.xlsx'
 
 # Función para cargar datos de forma limpia
 @st.cache_data
@@ -36,20 +36,17 @@ st.title("📊 Dashboard de Control: Izaje de Postes")
 st.markdown("---")
 
 if df is None:
-    st.error(f"No se encontró el archivo en la ruta: {ruta_archivo}")
+    st.error(f"No se encontró el archivo '{ruta_archivo}' en la carpeta del proyecto. Asegúrate de subirlo a GitHub junto con este código.")
 else:
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("Filtros de Búsqueda")
     
-    # Filtro por Estado
     estados_disponibles = ['TODOS'] + list(df['ESTADO'].unique())
     estado_seleccionado = st.sidebar.selectbox("Filtrar por Estado:", estados_disponibles)
     
-    # Filtro por Tipo de Terreno
     terrenos_disponibles = ['TODOS'] + list(df['TERRENO'].unique())
     terreno_seleccionado = st.sidebar.selectbox("Filtrar por Tipo de Terreno:", terrenos_disponibles)
     
-    # Aplicar filtros
     df_filtrado = df.copy()
     if estado_seleccionado != 'TODOS':
         df_filtrado = df_filtrado[df_filtrado['ESTADO'] == estado_seleccionado]
@@ -87,12 +84,8 @@ else:
 
     # --- TABLA DE DATOS INTERACTIVA ---
     st.subheader(f"📋 Detalle de Registros ({len(df_filtrado)} postes encontrados)")
-    
-    # Mostrar la tabla interactiva (puedes ordenar columnas haciendo clic en ellas)
     st.dataframe(df_filtrado, use_container_width=True)
     
-    # Botón para refrescar datos si modificaste el Excel recientemente
-    if st.button("🔄 Actualizar Datos desde el Excel"):
+    if st.button("🔄 Actualizar Datos"):
         st.cache_data.clear()
         st.rerun()
-        
