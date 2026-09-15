@@ -28,7 +28,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS con respiro interno para el logo y tarjetas de métricas
+# Estilos CSS generales y centrado vertical del título respecto al logo
 st.markdown("""
     <style>
         .metric-card {
@@ -54,10 +54,8 @@ st.markdown("""
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
-        
-        /* Espaciado de respiro para que el logo no toque los bordes y se vea completo */
         [data-testid="stImage"] img {
-            padding: 6px 0px;
+            padding: 4px 0px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -79,8 +77,8 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR OPTIMIZADO Y CENTRADO ---
-col_logo, col_title = st.columns([1.2, 3])
+# --- ENCABEZADO SUPERIOR CON TÍTULO CENTRADO ---
+col_logo, col_title = st.columns([1, 4])
 
 with col_logo:
     try:
@@ -90,9 +88,9 @@ with col_logo:
 
 with col_title:
     st.markdown("""
-        <div style='text-align: center; padding-top: 20px;'>
-            <h2 style='color: #212529; margin-bottom: 0px; font-size: calc(1.2rem + 1vw);'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
-            <p style='color: #6c757d; margin-top: 5px; font-size: calc(0.85rem + 0.3vw);'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
+        <div style='display: flex; flex-direction: column; justify-content: center; height: 100%; text-align: center; padding-top: 10px;'>
+            <h2 style='color: #212529; margin-bottom: 0px; font-size: calc(1.3rem + 1vw);'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
+            <p style='color: #6c757d; margin-top: 5px; font-size: calc(0.9rem + 0.3vw);'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
         </div>
     """, unsafe_allow_html=True)
 
