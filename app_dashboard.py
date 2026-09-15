@@ -40,15 +40,18 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Enlace directo de exportación CSV optimizado para tu Google Sheet
+# Enlace directo de exportación CSV optimizado
 sheet_url = "https://docs.google.com/spreadsheets/d/1HTEq01G5xgyMCNrocYvOeKIXTV0xhsKg/export?format=csv"
 
 @st.cache_data(ttl=60)
 def cargar_datos_gsheets(url):
     try:
+        # Leemos el archivo probando la cabecera estándar
         df = pd.read_csv(url, header=2)
-        df = df.dropna(subset=['N° DE POSTE/CAMARA', 'ESTADO'])
-        df = df[df['ESTADO'] != 'ESTADO']
+        
+        # Limpiamos espacios en los nombres de las columnas por si acaso
+        df.columns = df.columns.str.strip().str.upper()
+        
         return df, None
     except Exception as e:
         return None, str(e)
@@ -64,37 +67,52 @@ if df is None or len(df) == 0:
     st.error("No se pudo cargar la información desde Google Sheets.")
     if error_detallado:
         st.info(f"Detalle técnico del error: {error_detallado}")
-    st.warning("⚠️ Asegúrate de que el Google Sheet esté compartido como 'Cualquier usuario que tenga el vínculo' (Lector o Editor).")
 else:
+    # Identificamos automáticamente las columnas clave sin importar variaciones menores
+    columnas_disponibles = list(df.columns)
+    
+    # Buscamos nombres aproximados
+    col_poste = next((c for c in columnas_disponibles if 'POSTE' in c or 'CAMARA' in c), columnas_disponibles[1] if len(columnas_disponibles) > 1 else columnas_disponibles[0])
+    col_estado = next((c for c in columnas_disponibles if 'ESTADO' in c), None)
+    col_zona = next((c for c in columnas_disponibles if 'ZONA' in c or 'SECTOR' in c), None)
+    col_terreno = next((c for c in columnas_disponibles if 'TERRENO' in c), None)
+
+    # Filtrar filas vacías de la columna principal
+    df = df.dropna(subset=[col_poste])
+    if col_estado:
+        df = df[df[col_estado].astype(str).str.upper() != 'ESTADO']
+
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("🔍 Filtros de Búsqueda")
     
-    # Filtro por Zona (si la columna existe)
-    if 'ZONA' in df.columns:
-        zonas_disponibles = ['TODOS'] + list(df['ZONA'].dropna().unique())
-        zona_seleccionada = st.sidebar.selectbox("Filtrar por Zona / Sector:", zonas_disponibles)
-    else:
-        zona_seleccionada = 'TODOS'
+    zona_seleccionada = 'TODOS'
+    if col_zona:
+        zonas_disp = ['TODOS'] + list(df[col_zona].dropna().astype(str).unique())
+        zona_seleccionada = st.sidebar.selectbox("Filtrar por Zona / Sector:", zonas_disp)
     
-    estados_disponibles = ['TODOS'] + list(df['ESTADO'].unique())
-    estado_seleccionado = st.sidebar.selectbox("Filtrar por Estado:", estados_disponibles)
+    estado_seleccionado = 'TODOS'
+    if col_estado:
+        estados_disp = ['TODOS'] + list(df[col_estado].dropna().astype(str).unique())
+        estado_seleccionado = st.sidebar.selectbox("Filtrar por Estado:", estados_disp)
+        
+    terreno_seleccionado = 'TODOS'
+    if col_terreno:
+        terrenos_disp = ['TODOS'] + list(df[col_terreno].dropna().astype(str).unique())
+        terreno_seleccionado = st.sidebar.selectbox("Filtrar por Tipo de Terreno:", terrenos_disp)
     
-    terrenos_disponibles = ['TODOS'] + list(df['TERRENO'].dropna().unique()) if 'TERRENO' in df.columns else ['TODOS']
-    terreno_seleccionado = st.sidebar.selectbox("Filtrar por Tipo de Terreno:", terrenos_disponibles)
-    
-    # Aplicar filtros
+    # Aplicar filtros dinámicos
     df_filtrado = df.copy()
-    if zona_seleccionada != 'TODOS' and 'ZONA' in df.columns:
-        df_filtrado = df_filtrado[df_filtrado['ZONA'] == zona_seleccionada]
-    if estado_seleccionado != 'TODOS':
-        df_filtrado = df_filtrado[df_filtrado['ESTADO'] == estado_seleccionado]
-    if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
-        df_filtrado = df_filtrado[df_filtrado['TERRENO'] == terreno_seleccionado]
+    if zona_seleccionada != 'TODOS' and col_zona:
+        df_filtrado = df_filtrado[df_filtrado[col_zona].astype(str) == zona_seleccionada]
+    if estado_seleccionado != 'TODOS' and col_estado:
+        df_filtrado = df_filtrado[df_filtrado[col_estado].astype(str) == estado_seleccionado]
+    if terreno_seleccionado != 'TODOS' and col_terreno:
+        df_filtrado = df_filtrado[df_filtrado[col_terreno].astype(str) == terreno_seleccionado]
 
     # --- MÉTRICAS PRINCIPALES (KPIs) ---
     total_postes = len(df_filtrado)
-    pendientes = len(df_filtrado[df_filtrado['ESTADO'] == 'PENDIENTE'])
-    ok = len(df_filtrado[df_filtrado['ESTADO'] == 'OK'])
+    pendientes = len(df_filtrado[df_filtrado[col_estado].astype(str).str.upper() == 'PENDIENTE']) if col_estado else 0
+    ok = len(df_filtrado[df_filtrado[col_estado].astype(str).str.upper() == 'OK']) if col_estado else 0
     porcentaje_avance = (ok / total_postes) * 100 if total_postes > 0 else 0
 
     col1, col2, col3, col4 = st.columns(4)
@@ -130,33 +148,31 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES MEJORADAS ---
+    # --- GRÁFICAS VISUALES ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
-        st.subheader("📌 Proporción de Estados")
-        conteo_estados = df_filtrado['ESTADO'].value_counts()
-        st.bar_chart(conteo_estados, color="#0275d8")
+        if col_estado:
+            st.subheader("📌 Proporción de Estados")
+            st.bar_chart(df_filtrado[col_estado].value_counts(), color="#0275d8")
         
     with col_g2:
-        if 'ZONA' in df.columns:
+        if col_zona:
             st.subheader("🗺️ Distribución por Zonas")
-            conteo_zonas = df['ZONA'].value_counts()
-            st.bar_chart(conteo_zonas, color="#f0ad4e")
-        elif 'TERRENO' in df.columns:
+            st.bar_chart(df_filtrado[col_zona].value_counts(), color="#f0ad4e")
+        elif col_terreno:
             st.subheader("🌍 Distribución por Tipo de Terreno")
-            conteo_terrenos = df['TERRENO'].value_counts()
-            st.bar_chart(conteo_terrenos, color="#5cb85c")
+            st.bar_chart(df_filtrado[col_terreno].value_counts(), color="#5cb85c")
 
     st.markdown("---")
 
     # --- BUSCADOR RÁPIDO DE POSTE ESPECÍFICO ---
     st.subheader("🔍 Consulta Individual de Poste")
-    lista_postes = list(df['N° DE POSTE/CAMARA'].astype(str).unique())
+    lista_postes = list(df[col_poste].astype(str).unique())
     poste_buscado = st.selectbox("Seleccione o busque el número de poste:", ["-- Seleccionar --"] + lista_postes)
     
     if poste_buscado != "-- Seleccionar --":
-        datos_poste = df[df['N° DE POSTE/CAMARA'].astype(str) == str(poste_buscado)]
+        datos_poste = df[df[col_poste].astype(str) == str(poste_buscado)]
         st.dataframe(datos_poste, use_container_width=True)
 
     st.markdown("---")
