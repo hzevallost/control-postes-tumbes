@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados para tarjetas ejecutivas y optimización de espacios
+# Estilos CSS personalizados (con más espacio superior para que los logos no se corten)
 st.markdown("""
     <style>
         .metric-card {
@@ -39,9 +39,9 @@ st.markdown("""
             color: #212529;
             font-weight: bold;
         }
-        /* Reduce espacio superior innecesario en Streamlit */
+        /* Espacio superior holgado para que la cabecera y los logos respiren */
         .block-container {
-            padding-top: 2rem;
+            padding-top: 3.5rem;
             padding-bottom: 2rem;
         }
     </style>
@@ -65,12 +65,11 @@ def cargar_datos_gsheets(url):
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
 # --- ENCABEZADO SUPERIOR CON TÍTULO CENTRADO Y LOGOS BALANCEADOS ---
-col_logo1, col_title, col_logo2 = st.columns([1.2, 2.6, 1.2])
+col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
 
 with col_logo1:
     try:
-        # Ancho mayor para compensar la forma horizontal de Quantum
-        st.image("quantum.png", width=220) 
+        st.image("quantum.png", width=170) # Ancho equilibrado para Quantum
     except:
         st.write("Logo Quantum no encontrado")
 
@@ -84,8 +83,7 @@ with col_title:
 
 with col_logo2:
     try:
-        # Ancho menor para compensar la forma cuadrada/vertical del escudo
-        st.image("logo.png", width=120) 
+        st.image("logo.png", width=95) # Ancho ajustado para que la altura del escudo coincida con Quantum
     except:
         st.write("Logo Municipalidad no encontrado")
 
