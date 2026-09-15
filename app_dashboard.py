@@ -176,7 +176,37 @@ else:
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
-        if 'ESTADO' in df.columns:
+        if 'ZONA' in df.columns:
+            st.subheader("🗺️ Observados por Zonas")
+            conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
+            conteo_zonas.columns = ['ZONA', 'CANTIDAD']
+            
+            fig_bar3d = go.Figure(data=[
+                go.Bar(
+                    x=conteo_zonas['ZONA'],
+                    y=conteo_zonas['CANTIDAD'],
+                    text=conteo_zonas['CANTIDAD'],
+                    textposition='auto',
+                    marker=dict(
+                        color=['#f0ad4e', '#0275d8', '#5cb85c'],
+                        line=dict(color='#111111', width=2),
+                        opacity=0.95
+                    )
+                )
+            ])
+            fig_bar3d.update_layout(
+                margin=dict(t=20, b=0, l=0, r=0),
+                height=320,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(title='Zona', showgrid=False, linecolor='black', linewidth=2),
+                yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
+                bargap=0.35
+            )
+            st.plotly_chart(fig_bar3d, use_container_width=True, config={'displayModeBar': False})
+               
+    with col_g2:
+ if 'ESTADO' in df.columns:
             st.subheader("📌 Estado (% de Avance)")
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
@@ -206,36 +236,6 @@ else:
                 plot_bgcolor='rgba(0,0,0,0)'
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
-        
-    with col_g2:
-        if 'ZONA' in df.columns:
-            st.subheader("🗺️ Observados por Zonas")
-            conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
-            conteo_zonas.columns = ['ZONA', 'CANTIDAD']
-            
-            fig_bar3d = go.Figure(data=[
-                go.Bar(
-                    x=conteo_zonas['ZONA'],
-                    y=conteo_zonas['CANTIDAD'],
-                    text=conteo_zonas['CANTIDAD'],
-                    textposition='auto',
-                    marker=dict(
-                        color=['#f0ad4e', '#0275d8', '#5cb85c'],
-                        line=dict(color='#111111', width=2),
-                        opacity=0.95
-                    )
-                )
-            ])
-            fig_bar3d.update_layout(
-                margin=dict(t=20, b=0, l=0, r=0),
-                height=320,
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                xaxis=dict(title='Zona', showgrid=False, linecolor='black', linewidth=2),
-                yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
-                bargap=0.35
-            )
-            st.plotly_chart(fig_bar3d, use_container_width=True, config={'displayModeBar': False})
 
     # Segunda fila de gráficos: Clasificación por Tipo de Terreno (3D)
     if 'TERRENO' in df.columns:
