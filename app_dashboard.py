@@ -28,7 +28,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS generales limpios
+# Estilos CSS con respiro interno para el logo y tarjetas de métricas
 st.markdown("""
     <style>
         .metric-card {
@@ -54,6 +54,11 @@ st.markdown("""
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
+        
+        /* Espaciado de respiro para que el logo no toque los bordes y se vea completo */
+        [data-testid="stImage"] img {
+            padding: 6px 0px;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -74,12 +79,11 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR NATIVO (SIN CORTES Y CARGA SEGURA) ---
+# --- ENCABEZADO SUPERIOR OPTIMIZADO Y CENTRADO ---
 col_logo, col_title = st.columns([1.2, 3])
 
 with col_logo:
     try:
-        # Usamos st.image nativo para que cargue perfecto sin importar la plataforma
         st.image("quantum.png", width=300)
     except:
         st.write("Logo Quantum no encontrado")
