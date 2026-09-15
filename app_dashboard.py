@@ -191,9 +191,9 @@ else:
                         name=estado,
                         x=df_zona_estado['ZONA'],
                         y=df_zona_estado[estado],
-                        text=df_zona_estado[estado],  # <--- Muestra la cantidad numérica
-                        textposition='inside',        # <--- Ubica la etiqueta dentro de la sección
-                        textfont=dict(color='white', size=13, family="Arial Black"), # Texto destacado
+                        text=df_zona_estado[estado],
+                        textposition='inside',
+                        textfont=dict(color='white', size=13, family="Arial Black"),
                         marker_color=color_estados.get(estado, '#333333'),
                         marker_line=dict(color='#111111', width=1.5)
                     ))
@@ -253,8 +253,8 @@ else:
                     name=estado,
                     x=df_terreno_estado['TERRENO'],
                     y=df_terreno_estado[estado],
-                    text=df_terreno_estado[estado],  # <--- Muestra la cantidad numérica
-                    textposition='inside',        # <--- Ubica la etiqueta dentro de la sección
+                    text=df_terreno_estado[estado],
+                    textposition='inside',
                     textfont=dict(color='white', size=13, family="Arial Black"),
                     marker_color=color_estados.get(estado, '#333333'),
                     marker_line=dict(color='#111111', width=1.5)
@@ -274,6 +274,12 @@ else:
 
     st.markdown("---")
 
+    # Función para resaltar en verde claro las filas que tengan estado 'CONFORME'
+    def resaltar_conformes(row):
+        if 'ESTADO' in row and str(row['ESTADO']).upper() == 'CONFORME':
+            return ['background-color: #d4edda; color: #155724; font-weight: bold'] * len(row)
+        return [''] * len(row)
+
     # --- BUSCADOR RÁPIDO DE POSTE ESPECÍFICO ---
     st.subheader("🔍 Consulta Individual de Poste")
     col_busqueda = 'N° POSTE' if 'N° POSTE' in df.columns else df.columns[1]
@@ -282,13 +288,18 @@ else:
     
     if poste_buscado != "-- Seleccionar --":
         datos_poste = df[df[col_busqueda].astype(str) == str(poste_buscado)]
-        st.dataframe(datos_poste, use_container_width=True)
+        # Aplicando estilo resaltado en verde para conformes
+        datos_poste_estilizado = datos_poste.style.apply(resaltar_conformes, axis=1)
+        st.dataframe(datos_poste_estilizado, use_container_width=True)
 
     st.markdown("---")
 
     # --- TABLA DE DATOS INTERACTIVA COMPLETA ---
     st.subheader(f"📋 Detalle de Registros Filtrados ({len(df_filtrado)} elementos)")
-    st.dataframe(df_filtrado, use_container_width=True)
+    
+    # Aplicando estilo resaltado en verde para conformes en la tabla completa
+    df_filtrado_estilizado = df_filtrado.style.apply(resaltar_conformes, axis=1)
+    st.dataframe(df_filtrado_estilizado, use_container_width=True)
     
     # Botón de refresco manual
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
