@@ -408,7 +408,7 @@ else:
         except Exception as e:
             st.error(f"Error al generar Excel: {e}")
 
-    # 2. Botón para Exportar a PDF (Con Gráficos de Matplotlib 100% Compatibles)
+    # 2. Botón para Exportar a PDF (Con Gráficos de Barras Apiladas por Estado y Pastel)
     with col_exp2:
         def generar_pdf_con_matplot(data_df, total, pend, aten, conf):
             buffer = io.BytesIO()
@@ -428,15 +428,25 @@ else:
             elements.append(Paragraph(kpi_text, ParagraphStyle('KPI', parent=styles['Normal'], fontSize=10, alignment=1)))
             elements.append(Spacer(1, 15))
 
-            # --- GENERAR GRÁFICOS CON MATPLOTLIB ---
+            # --- GENERAR GRÁFICOS CON MATPLOTLIB (BARRAS APILADAS Y PASTEL) ---
             img_buf_1, img_buf_2 = None, None
             try:
-                # Gráfico 1: Estado (Pastel)
+                # Gráfico 1: Estado (Pastel con leyenda lateral)
                 if 'ESTADO' in data_df.columns and len(data_df) > 0:
-                    fig, ax = plt.subplots(figsize=(4, 2.2))
+                    fig, ax = plt.subplots(figsize=(4.2, 2.2))
                     conteo = data_df['ESTADO'].value_counts()
                     colores_pie = ['#d9534f' if x=='PENDIENTE' else '#ffc107' if x=='ATENDIDO' else '#28a745' for x in conteo.index]
-                    ax.pie(conteo, labels=conteo.index, colors=colores_pie, autopct='%1.1f%%', startangle=90, textprops={'fontsize': 8})
+                    
+                    wedges, texts, autotexts = ax.pie(
+                        conteo, 
+                        labels=None, 
+                        colors=colores_pie, 
+                        autopct='%1.1f%%', 
+                        startangle=90, 
+                        pctdistance=0.55,
+                        textprops={'fontsize': 8, 'weight': 'bold', 'color': 'white'}
+                    )
+                    ax.legend(wedges, conteo.index, title="Estado", loc="center left", bbox_to_anchor=(0.95, 0.5), fontsize=8, title_fontsize=8)
                     ax.set_title("Distribución por Estado", fontsize=9, fontweight='bold')
                     plt.tight_layout()
                     
@@ -445,13 +455,31 @@ else:
                     img_buf_1.seek(0)
                     plt.close(fig)
 
-                # Gráfico 2: Zona (Barras)
-                if 'ZONA' in data_df.columns and len(data_df) > 0:
-                    fig, ax = plt.subplots(figsize=(4.5, 2.2))
-                    conteo_zona = data_df['ZONA'].value_counts()
-                    ax.bar(conteo_zona.index.astype(str), conteo_zona.values, color='#0275d8')
-                    ax.set_title("Registros por Zona", fontsize=9, fontweight='bold')
-                    ax.tick_params(axis='x', rotation=15, labelsize=8)
+                # Gráfico 2: Zona con Barras Apiladas por Estado
+                if 'ZONA' in data_df.columns and 'ESTADO' in data_df.columns and len(data_df) > 0:
+                    fig, ax = plt.subplots(figsize=(4.8, 2.2))
+                    df_zona_est = data_df.groupby(['ZONA', 'ESTADO']).size().unstack(fill_value=0)
+                    
+                    # Asegurar orden de columnas estándar
+                    for est in ['PENDIENTE', 'ATENDIDO', 'CONFORME']:
+                        if est not in df_zona_est.columns:
+                            df_zona_est[est] = 0
+                    df_zona_est = df_zona_est[['PENDIENTE', 'ATENDIDO', 'CONFORME']]
+                    
+                    bottom = None
+                    colores_bar = ['#d9534f', '#ffc107', '#28a745']
+                    
+                    for idx, estado in enumerate(df_zona_est.columns):
+                        values = df_zona_est[estado].values
+                        ax.bar(df_zona_est.index.astype(str), values, bottom=bottom, label=estado, color=colores_bar[idx], width=0.45)
+                        if bottom is None:
+                            bottom = values
+                        else:
+                            bottom = bottom + values
+
+                    ax.legend(title="Estado", loc="upper right", fontsize=7, title_fontsize=7)
+                    ax.set_title("Observados por Zonas", fontsize=9, fontweight='bold')
+                    ax.tick_params(axis='x', rotation=10, labelsize=8)
                     ax.tick_params(axis='y', labelsize=8)
                     plt.tight_layout()
                     
@@ -462,7 +490,6 @@ else:
             except Exception as e:
                 pass
 
-            # Insertar gráficos en el PDF si se generaron con éxito
             elements.append(Paragraph("<b>📈 Resumen Estadístico de Avance</b>", seccion_estilo))
             img_elements = []
             if img_buf_1:
