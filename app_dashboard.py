@@ -73,11 +73,17 @@ else:
     col_estado_idx = None
     for col in df.columns:
         valores_str = df[col].astype(str).str.upper()
-        if valores_str.str.contains('PENDIENTE|OK').any() and col_estado_idx is None:
+        # Buscamos filas que contengan los estados válidos del proyecto
+        if valores_str.str.contains('PENDIENTE|ATENDIDO|CONFORME|OK').any() and col_estado_idx is None:
             col_estado_idx = col
 
     if col_estado_idx is not None:
-        df = df[df[col_estado_idx].astype(str).str.upper().isin(['PENDIENTE', 'OK'])]
+        # Normalizamos la celda 'OK' antigua por 'ATENDIDO' por compatibilidad automática
+        df[col_estado_idx] = df[col_estado_idx].astype(str).str.upper().str.strip()
+        df[col_estado_idx] = df[col_estado_idx].replace('OK', 'ATENDIDO')
+        
+        # Filtramos solo las filas que tengan estos estados válidos
+        df = df[df[col_estado_idx].isin(['PENDIENTE', 'ATENDIDO', 'CONFORME'])]
     
     df = df.reset_index(drop=True)
     df.index = df.index + 1  # Inicia estrictamente en 1
@@ -112,18 +118,21 @@ else:
     if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
         df_filtrado = df_filtrado[df_filtrado['TERRENO'].astype(str) == terreno_seleccionado]
 
-    # --- MÉTRICAS PRINCIPALES (KPIs con cambios solicitados) ---
+    # --- MÉTRICAS PRINCIPALES (KPIs con los 3 estados) ---
     total_postes = len(df_filtrado)
-    pendientes = len(df_filtrado[df_filtrado['ESTADO'].astype(str).str.upper() == 'PENDIENTE']) if 'ESTADO' in df.columns else 0
-    ok = len(df_filtrado[df_filtrado['ESTADO'].astype(str).str.upper() == 'OK']) if 'ESTADO' in df.columns else 0
-    porcentaje_avance = (ok / total_postes) * 100 if total_postes > 0 else 0
+    pendientes = len(df_filtrado[df_filtrado['ESTADO'] == 'PENDIENTE']) if 'ESTADO' in df.columns else 0
+    atendidos = len(df_filtrado[df_filtrado['ESTADO'] == 'ATENDIDO']) if 'ESTADO' in df.columns else 0
+    conformes = len(df_filtrado[df_filtrado['ESTADO'] == 'CONFORME']) if 'ESTADO' in df.columns else 0
+    
+    # Avance basado en los conformes o atendidos totales
+    porcentaje_avance = ((atendidos + conformes) / total_postes) * 100 if total_postes > 0 else 0
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-title">Postes Observados</div>
+                <div class="metric-title">Observados</div>
                 <div class="metric-value">🏛️ {total_postes}</div>
             </div>
         """, unsafe_allow_html=True)
@@ -137,14 +146,21 @@ else:
     with col3:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-title">Atendido</div>
-                <div class="metric-value" style="color: #5cb85c;">✅ {ok}</div>
+                <div class="metric-title">Atendidos</div>
+                <div class="metric-value" style="color: #f0ad4e;">🔧 {atendidos}</div>
             </div>
         """, unsafe_allow_html=True)
     with col4:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-title">Avance Sectorial</div>
+                <div class="metric-title">Conformes</div>
+                <div class="metric-value" style="color: #5cb85c;">🏆 {conformes}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with col5:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-title">Avance Global</div>
                 <div class="metric-value" style="color: #0275d8;">📈 {porcentaje_avance:.1f}%</div>
             </div>
         """, unsafe_allow_html=True)
@@ -160,21 +176,24 @@ else:
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
-            # Gráfico de pastel con efecto visual 3D (pull y rotación de perspectiva)
+            # Gráfico circular 3D con colores específicos para cada estado
             fig_pie = px.pie(
                 conteo_estados, 
                 names='ESTADO', 
                 values='CANTIDAD', 
                 hole=0.35,
                 color='ESTADO',
-                color_discrete_map={'OK': '#5cb85c', 'PENDIENTE': '#d9534f'}
+                color_discrete_map={
+                    'CONFORME': '#28a745',   # Verde oficial
+                    'ATENDIDO': '#ffc107',   # Amarillo / Naranja preventivo
+                    'PENDIENTE': '#d9534f'   # Rojo alerta
+                }
             )
-            # Activando propiedades visuales 3D e inclinación de etiquetas
             fig_pie.update_traces(
                 textposition='inside', 
                 textinfo='percent+label',
-                pull=[0.05, 0], # Efecto 3D de separación en la rebanada
-                marker=dict(line=dict(color='#000000', width=1)) # Bordes definidos para realce tridimensional
+                pull=[0.05, 0, 0], 
+                marker=dict(line=dict(color='#000000', width=1))
             )
             fig_pie.update_layout(
                 margin=dict(t=0, b=0, l=0, r=0), 
@@ -190,7 +209,6 @@ else:
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
-            # Gráfico de barras con estilo moderno y proyección limpia
             fig_bar = px.bar(
                 conteo_zonas, 
                 x='ZONA', 
