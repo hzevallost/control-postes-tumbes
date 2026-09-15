@@ -28,7 +28,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS limpios (sin restricciones de tamaño para que el logo crezca libremente)
+# Estilos CSS generales limpios
 st.markdown("""
     <style>
         .metric-card {
@@ -74,19 +74,19 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR AMPLIADO ---
-col_logo, col_title = st.columns([1, 2.5])
+# --- ENCABEZADO SUPERIOR NATIVO (SIN CORTES Y CARGA SEGURA) ---
+col_logo, col_title = st.columns([1.2, 3])
 
 with col_logo:
     try:
-        # Aquí puedes cambiar el número 'width' si deseas que sea aún más grande o un poco más pequeño
-        st.image("quantum.png", width=280)
+        # Usamos st.image nativo para que cargue perfecto sin importar la plataforma
+        st.image("quantum.png", width=300)
     except:
         st.write("Logo Quantum no encontrado")
 
 with col_title:
     st.markdown("""
-        <div style='text-align: center; padding-top: 15px;'>
+        <div style='text-align: center; padding-top: 20px;'>
             <h2 style='color: #212529; margin-bottom: 0px; font-size: calc(1.2rem + 1vw);'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
             <p style='color: #6c757d; margin-top: 5px; font-size: calc(0.85rem + 0.3vw);'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
         </div>
