@@ -10,8 +10,10 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import io
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from reportlab.lib.pagesizes import letter, landscape
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
@@ -199,6 +201,10 @@ else:
         'CONFORME': '#28a745'
     }
 
+    fig_bar_zona = None
+    fig_pie = None
+    fig_bar_terreno = None
+
     with col_g1:
         if 'ZONA' in df.columns and 'ESTADO' in df.columns:
             st.subheader("🗺️ Observados por Zonas")
@@ -328,69 +334,159 @@ else:
     st.markdown("### 📥 Exportar Reportes de Obra")
     col_exp1, col_exp2 = st.columns(2)
 
-    # 1. Botón para Exportar a EXCEL
+    # 1. Botón para Exportar a EXCEL con Formato Profesional
     with col_exp1:
-        output_excel = io.BytesIO()
-        with pd.ExcelWriter(output_excel, engine='openpyxl') as writer:
-            df_filtrado.to_excel(writer, index=False, sheet_name='Reporte Postes')
-        excel_data = output_excel.getvalue()
+        def generar_excel_estilizado(data_df):
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Control de Postes"
+            
+            headers = list(data_df.columns)
+            ws.append(headers)
+            
+            header_fill = PatternFill(start_color="343A40", end_color="343A40", fill_type="solid")
+            header_font = Font(name="Arial", size=10, bold=True, color="FFFFFF")
+            align_center = Alignment(horizontal="center", vertical="center")
+            
+            for col_num in range(1, len(headers) + 1):
+                cell = ws.cell(row=1, column=col_num)
+                cell.fill = header_fill
+                cell.font = header_font
+                cell.alignment = align_center
 
-        st.download_button(
-            label="📊 Descargar Reporte en Excel (.xlsx)",
-            data=excel_data,
-            file_name="reporte_control_postes.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
+            fill_conforme = PatternFill(start_color="D9EAD3", end_color="D9EAD3", fill_type="solid")
+            font_conforme = Font(name="Arial", size=9, color="274E13", bold=True)
+            
+            fill_atendido = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+            font_atendico = Font(name="Arial", size=9, color="7F6000", bold=True)
+            
+            default_font = Font(name="Arial", size=9)
+            thin_border = Border(
+                left=Side(style='thin', color='DEE2E6'),
+                right=Side(style='thin', color='DEE2E6'),
+                top=Side(style='thin', color='DEE2E6'),
+                bottom=Side(style='thin', color='DEE2E6')
+            )
 
-    # 2. Botón para Exportar a PDF (Formato Horizontal / Landscape optimizado)
+            estado_idx = headers.index('ESTADO') + 1 if 'ESTADO' in headers else None
+
+            for row_idx, row in enumerate(data_df.values, start=2):
+                ws.append(list(row))
+                estado_val = str(row[estado_idx - 1]).upper() if estado_idx else ""
+                
+                for col_num in range(1, len(headers) + 1):
+                    cell = ws.cell(row=row_idx, column=col_num)
+                    cell.border = thin_border
+                    cell.font = default_font
+                    
+                    if estado_val == 'CONFORME':
+                        cell.fill = fill_conforme
+                        cell.font = font_conforme
+                    elif estado_val == 'ATENDIDO':
+                        cell.fill = fill_atendido
+                        cell.font = font_atendico
+
+            for col in ws.columns:
+                max_len = max(len(str(cell.value or '')) for cell in col)
+                col_letter = col[0].column_letter
+                ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
+
+            output = io.BytesIO()
+            wb.save(output)
+            output.seek(0)
+            return output.getvalue()
+
+        try:
+            excel_data = generar_excel_estilizado(df_filtrado)
+            st.download_button(
+                label="📊 Descargar Reporte en Excel con Formato (.xlsx)",
+                data=excel_data,
+                file_name="reporte_control_postes.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"Error al generar Excel: {e}")
+
+    # 2. Botón para Exportar a PDF (Incluyendo Gráficos y Tabla Completa)
     with col_exp2:
-        def generar_pdf(data_df, total, pend, aten, conf):
+        def generar_pdf_con_graficos(data_df, total, pend, aten, conf, f_zona, f_pie, f_terreno):
             buffer = io.BytesIO()
-            # Formato horizontal (landscape) para que entren todas las columnas holgadamente
             doc = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
             elements = []
             
             styles = getSampleStyleSheet()
             titulo_estilo = ParagraphStyle('Titulo', parent=styles['Heading1'], fontSize=15, alignment=1, textColor=colors.HexColor('#212529'))
             sub_estilo = ParagraphStyle('Sub', parent=styles['Normal'], fontSize=10, alignment=1, textColor=colors.HexColor('#6c757d'))
+            seccion_estilo = ParagraphStyle('Sec', parent=styles['Heading2'], fontSize=12, textColor=colors.HexColor('#343a40'), spaceBefore=10, spaceAfter=5)
             
-            elements.append(Paragraph("<b>REPORTE DE CONTROL DE POSTES OBSERVADOS</b>", titulo_estilo))
+            elements.append(Paragraph("<b>REPORTE EJECUTIVO - CONTROL DE POSTES OBSERVADOS</b>", titulo_estilo))
             elements.append(Paragraph("Consorcio Quantum SC Tumbes", sub_estilo))
             elements.append(Spacer(1, 10))
             
-            # Resumen de KPIs
             kpi_text = f"<b>Total Registros:</b> {total} &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#d9534f'><b>Pendientes:</b> {pend}</font> &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#7f6000'><b>Atendidos:</b> {aten}</font> &nbsp;&nbsp;|&nbsp;&nbsp; <font color='#274e13'><b>Conformes:</b> {conf}</font>"
             elements.append(Paragraph(kpi_text, ParagraphStyle('KPI', parent=styles['Normal'], fontSize=10, alignment=1)))
-            elements.append(Spacer(1, 12))
+            elements.append(Spacer(1, 15))
+
+            # Sección de Gráficos Estadísticos
+            elements.append(Paragraph("<b>📈 Resumen Gráfico de Avance</b>", seccion_estilo))
             
-            # Envolver el texto de las celdas en párrafos para que se ajusten automáticamente al ancho
+            graficos_imgs = []
+            try:
+                if f_zona:
+                    img_bytes_1 = f_zona.to_image(format="png", width=400, height=220, scale=2)
+                    graficos_imgs.append(RLImage(io.BytesIO(img_bytes_1), width=230, height=125))
+                if f_pie:
+                    img_bytes_2 = f_pie.to_image(format="png", width=400, height=220, scale=2)
+                    graficos_imgs.append(RLImage(io.BytesIO(img_bytes_2), width=230, height=125))
+                if f_terreno:
+                    img_bytes_3 = f_terreno.to_image(format="png", width=400, height=220, scale=2)
+                    graficos_imgs.append(RLImage(io.BytesIO(img_bytes_3), width=230, height=125))
+            except Exception as e:
+                pass
+
+            if graficos_imgs:
+                # Organizar gráficos en pares dentro de una tabla de PDF
+                table_grafs_data = []
+                for i in range(0, len(graficos_imgs), 2):
+                    row_imgs = graficos_imgs[i:i+2]
+                    if len(row_imgs) == 1:
+                        row_imgs.append('')
+                    table_grafs_data.append(row_imgs)
+                
+                t_grafs = Table(table_grafs_data, colWidths=[360, 360])
+                t_grafs.setStyle(TableStyle([
+                    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+                ]))
+                elements.append(t_grafs)
+
+            elements.append(Spacer(1, 15))
+            elements.append(Paragraph("<b>📋 Detalle de Registros en Obra</b>", seccion_estilo))
+
             estilo_celda = ParagraphStyle('Celda', parent=styles['Normal'], fontSize=8, textColor=colors.HexColor('#212529'))
             estilo_cabecera = ParagraphStyle('Cabecera', parent=styles['Normal'], fontSize=8, fontName='Helvetica-Bold', textColor=colors.whitesmoke, alignment=1)
             
             table_data = []
-            # Cabeceras
             header_row = [Paragraph(str(col), estilo_cabecera) for col in data_df.columns]
             table_data.append(header_row)
             
-            # Filas
             for _, row in data_df.iterrows():
                 row_cells = [Paragraph(str(val), estilo_celda) for val in row]
                 table_data.append(row_cells)
                 
-            # Anchos personalizados para las columnas en la hoja horizontal (Ancho total aprox 730 pt)
-            # ZONA, N° POSTE, TIPO/ALTURA, TERRENO, JUSTIFICACIÓN, OBSERVACIÓN/ACCIÓN, ESTADO
             col_widths = [75, 55, 65, 75, 180, 225, 60]
             if len(col_widths) != len(data_df.columns):
-                col_widths = None # Automático si cambian las columnas
+                col_widths = None
                 
             t = Table(table_data, colWidths=col_widths, repeatRows=1)
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#343a40')),
                 ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-                ('TOPPADDING', (0,0), (-1,-1), 6),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+                ('TOPPADDING', (0,0), (-1,-1), 5),
                 ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8f9fa')),
                 ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dee2e6')),
             ]))
@@ -400,16 +496,16 @@ else:
             return buffer.getvalue()
 
         try:
-            pdf_data = generar_pdf(df_filtrado, total_postes, pendientes, atendidos, conformes)
+            pdf_data = generar_pdf_con_graficos(df_filtrado, total_postes, pendientes, atendidos, conformes, fig_bar_zona, fig_pie, fig_bar_terreno)
             st.download_button(
-                label="📄 Descargar Reporte Ejecutivo en PDF",
+                label="📄 Descargar Reporte Ejecutivo con Gráficos en PDF",
                 data=pdf_data,
-                file_name="reporte_control_postes.pdf",
+                file_name="reporte_ejecutivo_postes.pdf",
                 mime="application/pdf",
                 use_container_width=True
             )
         except Exception as e:
-            st.info("Para habilitar la descarga en PDF, asegúrate de incluir 'reportlab' en tu archivo requirements.txt de GitHub.")
+            st.info("Para incluir los gráficos en el PDF, asegúrate de tener instaladas las librerías 'reportlab' y 'kaleido' en tu archivo requirements.txt de GitHub.")
 
     # Botón de refresco manual
     st.markdown("<br>", unsafe_allow_html=True)
