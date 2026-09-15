@@ -205,7 +205,7 @@ else:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False}))
+            st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
         
     with col_g2:
         if 'ZONA' in df.columns:
@@ -235,7 +235,7 @@ else:
                 yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
                 bargap=0.35
             )
-            st.plotly_chart(fig_bar3d, use_container_width=True, config={'displayModeBar': False}))
+            st.plotly_chart(fig_bar3d, use_container_width=True, config={'displayModeBar': False})
 
     # Segunda fila de gráficos: Clasificación por Tipo de Terreno (3D)
     if 'TERRENO' in df.columns:
@@ -266,7 +266,7 @@ else:
             yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
             bargap=0.35
         )
-        st.plotly_chart(fig_bar_terreno, use_container_width=True, config={'displayModeBar': False}))
+        st.plotly_chart(fig_bar_terreno, use_container_width=True, config={'displayModeBar': False})
 
     st.markdown("---")
 
