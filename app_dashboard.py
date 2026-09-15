@@ -68,7 +68,7 @@ df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 col_head1, col_head2 = st.columns([3, 1])
 
 with col_head1:
-    st.title("📊 DASHBOARD DE CONTROL DE POSTES")
+    st.title("📊 DASHBOARD CONTROL DE POSTES")
     st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
 
 with col_head2:
