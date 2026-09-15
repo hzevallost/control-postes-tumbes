@@ -209,7 +209,7 @@ else:
         
     with col_g2:
         if 'ZONA' in df.columns:
-            st.subheader("🗺️ Distribución por Zonas")
+            st.subheader("🗺️ Observados por Zonas")
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
