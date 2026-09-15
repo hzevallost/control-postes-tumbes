@@ -60,7 +60,7 @@ df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
 # Título Principal actualizado
 st.title("📊 DASHBOARD DE CONTROL DE POSTES")
-st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
+st.markdown("Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.")
 st.markdown("---")
 
 if df_raw is None or len(df_raw) == 0:
