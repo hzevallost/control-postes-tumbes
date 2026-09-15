@@ -83,7 +83,7 @@ col_logo, col_title = st.columns([1, 3.5])
 
 with col_logo:
     try:
-        st.image("quantum.png", width=230)
+        st.image("quantum.png", width=530)
     except:
         st.write("Logo Quantum no encontrado")
 
