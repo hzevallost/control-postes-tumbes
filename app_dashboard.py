@@ -17,7 +17,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados (con más espacio superior para que los logos no se corten)
+# Estilos CSS personalizados
 st.markdown("""
     <style>
         .metric-card {
@@ -39,7 +39,6 @@ st.markdown("""
             color: #212529;
             font-weight: bold;
         }
-        /* Espacio superior holgado para que la cabecera y los logos respiren */
         .block-container {
             padding-top: 3.5rem;
             padding-bottom: 2rem;
@@ -64,12 +63,12 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR CON TÍTULO CENTRADO Y LOGOS BALANCEADOS ---
+# --- ENCABEZADO SUPERIOR CON TÍTULO CENTRADO Y LOGOS EQUILIBRADOS ---
 col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
 
 with col_logo1:
     try:
-        st.image("quantum.png", width=170) # Ancho equilibrado para Quantum
+        st.image("quantum.png", width=170) # Logo de Quantum
     except:
         st.write("Logo Quantum no encontrado")
 
@@ -83,7 +82,7 @@ with col_title:
 
 with col_logo2:
     try:
-        st.image("logo.png", width=95) # Ancho ajustado para que la altura del escudo coincida con Quantum
+        st.image("logo.png", width=150) # Logo de la Municipalidad (tamaño corregido a 150)
     except:
         st.write("Logo Municipalidad no encontrado")
 
@@ -284,7 +283,7 @@ else:
 
     st.markdown("---")
 
-    # Función para resaltar filas según su estado (Conforme en verde suave, Atendido en amarillo suave)
+    # Función para resaltar filas según su estado
     def resaltar_filas(row):
         if 'ESTADO' in row:
             estado = str(row['ESTADO']).upper()
