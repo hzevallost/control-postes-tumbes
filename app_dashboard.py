@@ -209,7 +209,7 @@ else:
         
     with col_g2:
         if 'ZONA' in df.columns:
-            st.subheader("🗺️ Distribución por Zonas (3D)")
+            st.subheader("🗺️ Distribución por Zonas")
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
@@ -240,7 +240,7 @@ else:
     # Segunda fila de gráficos: Clasificación por Tipo de Terreno (3D)
     if 'TERRENO' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("🌍 Clasificación por Tipo de Terreno (3D)")
+        st.subheader("🌍 Clasificación por Tipo de Terreno")
         conteo_terreno = df_filtrado['TERRENO'].value_counts().reset_index()
         conteo_terreno.columns = ['TERRENO', 'CANTIDAD']
         
