@@ -16,7 +16,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS personalizados para tarjetas y diseño ejecutivo
+# Estilos CSS personalizados para tarjetas ejecutivas
 st.markdown("""
     <style>
         .metric-card {
@@ -28,13 +28,13 @@ st.markdown("""
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .metric-title {
-            font-size: 14px;
+            font-size: 13px;
             color: #6c757d;
             font-weight: 600;
             text-transform: uppercase;
         }
         .metric-value {
-            font-size: 28px;
+            font-size: 26px;
             color: #212529;
             font-weight: bold;
         }
@@ -112,7 +112,7 @@ else:
     if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
         df_filtrado = df_filtrado[df_filtrado['TERRENO'].astype(str) == terreno_seleccionado]
 
-    # --- MÉTRICAS PRINCIPALES (KPIs) ---
+    # --- MÉTRICAS PRINCIPALES (KPIs con cambios solicitados) ---
     total_postes = len(df_filtrado)
     pendientes = len(df_filtrado[df_filtrado['ESTADO'].astype(str).str.upper() == 'PENDIENTE']) if 'ESTADO' in df.columns else 0
     ok = len(df_filtrado[df_filtrado['ESTADO'].astype(str).str.upper() == 'OK']) if 'ESTADO' in df.columns else 0
@@ -123,8 +123,8 @@ else:
     with col1:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-title">Postes en Selección</div>
-                <div class="metric-value">🏗️ {total_postes}</div>
+                <div class="metric-title">Postes Observados</div>
+                <div class="metric-value">🏛️ {total_postes}</div>
             </div>
         """, unsafe_allow_html=True)
     with col2:
@@ -137,7 +137,7 @@ else:
     with col3:
         st.markdown(f"""
             <div class="metric-card">
-                <div class="metric-title">Aprobados (OK)</div>
+                <div class="metric-title">Atendido</div>
                 <div class="metric-value" style="color: #5cb85c;">✅ {ok}</div>
             </div>
         """, unsafe_allow_html=True)
@@ -151,26 +151,37 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES CON PLOTLY (EFECTO MODERNO / 3D INTERACTIVO) ---
+    # --- GRÁFICAS VISUALES CON EFECTO 3D (PLOTLY) ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
         if 'ESTADO' in df.columns:
-            st.subheader("📌 Proporción de Estados (Gráfico Circular)")
+            st.subheader("📌 Estado (%)")
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
-            # Gráfico de pastel interactivo moderno con efecto donut de alta calidad visual
+            # Gráfico de pastel con efecto visual 3D (pull y rotación de perspectiva)
             fig_pie = px.pie(
                 conteo_estados, 
                 names='ESTADO', 
                 values='CANTIDAD', 
-                hole=0.4,
+                hole=0.35,
                 color='ESTADO',
                 color_discrete_map={'OK': '#5cb85c', 'PENDIENTE': '#d9534f'}
             )
-            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-            fig_pie.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=300)
+            # Activando propiedades visuales 3D e inclinación de etiquetas
+            fig_pie.update_traces(
+                textposition='inside', 
+                textinfo='percent+label',
+                pull=[0.05, 0], # Efecto 3D de separación en la rebanada
+                marker=dict(line=dict(color='#000000', width=1)) # Bordes definidos para realce tridimensional
+            )
+            fig_pie.update_layout(
+                margin=dict(t=0, b=0, l=0, r=0), 
+                height=320,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
             st.plotly_chart(fig_pie, use_container_width=True)
         
     with col_g2:
@@ -179,7 +190,7 @@ else:
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
-            # Gráfico de barras interactivo con sombras y diseño tridimensional limpio
+            # Gráfico de barras con estilo moderno y proyección limpia
             fig_bar = px.bar(
                 conteo_zonas, 
                 x='ZONA', 
@@ -189,7 +200,13 @@ else:
                 color_discrete_sequence=['#f0ad4e', '#0275d8', '#5cb85c']
             )
             fig_bar.update_traces(texttemplate='%{text}', textposition='outside')
-            fig_bar.update_layout(margin=dict(t=10, b=0, l=0, r=0), height=300, showlegend=False)
+            fig_bar.update_layout(
+                margin=dict(t=20, b=0, l=0, r=0), 
+                height=320, 
+                showlegend=False,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
             st.plotly_chart(fig_bar, use_container_width=True)
 
     st.markdown("---")
