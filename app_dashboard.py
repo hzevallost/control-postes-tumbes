@@ -40,9 +40,8 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ID directo de tu Google Sheet (extraído de tu enlace original)
-sheet_id = "1HTEqO1G5xgyMCNrocYvOeKIXTV0xhsKg"
-sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+# Enlace directo de exportación CSV optimizado para tu Google Sheet
+sheet_url = "https://docs.google.com/spreadsheets/d/1HTEq01G5xgyMCNrocYvOeKIXTV0xhsKg/export?format=csv"
 
 @st.cache_data(ttl=60)
 def cargar_datos_gsheets(url):
