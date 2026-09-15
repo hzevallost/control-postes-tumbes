@@ -69,7 +69,7 @@ col_head1, col_head2 = st.columns([3, 1])
 
 with col_head1:
     st.title("📊 DASHBOARD CONTROL DE POSTES")
-    st.markdown("Monitoreo en tiempo real de avance, sectores y levantamiento de observaciones en obra.")
+    st.markdown("Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.")
 
 with col_head2:
     # AQUÍ PUEDES PONER LA RUTA DE TU LOGOTIPO O IMAGEN EN GITHUB (ej: 'logo.png')
