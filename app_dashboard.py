@@ -206,7 +206,7 @@ else:
             st.plotly_chart(fig_bar3d, use_container_width=True, config={'displayModeBar': False})
                
     with col_g2:
- if 'ESTADO' in df.columns:
+        if 'ESTADO' in df.columns:
             st.subheader("📌 Estado (% de Avance)")
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
