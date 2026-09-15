@@ -28,7 +28,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS avanzados con diseño responsivo específico para PC y Celulares
+# Estilos CSS avanzados con cabecera responsiva por Flexbox para PC y Celulares
 st.markdown("""
     <style>
         .metric-card {
@@ -55,29 +55,43 @@ st.markdown("""
             padding-bottom: 2rem;
         }
         
-        /* Contenedor inteligente para los logos adaptado a móviles */
-        .header-container {
+        /* CABECERA RESPONSIVA PROFESIONAL (FLEXBOX) */
+        .header-flex {
             display: flex;
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            gap: 15px;
             margin-bottom: 10px;
         }
-        .logo-style {
+        .header-logo-left {
+            flex: 1;
+            text-align: left;
+        }
+        .header-title-center {
+            flex: 3;
+            text-align: center;
+        }
+        .header-logo-right {
+            flex: 1;
+            text-align: right;
+        }
+        .header-logo-left img, .header-logo-right img {
             max-width: 140px;
             height: auto;
         }
-        
+
         /* Regla estricta para celulares en posición vertical */
         @media (max-width: 768px) {
-            .header-container {
+            .header-flex {
                 flex-direction: column !important;
                 text-align: center !important;
             }
-            .logo-style {
-                max-width: 120px !important;
-                margin: 5px auto !important;
+            .header-logo-left, .header-logo-right {
+                text-align: center !important;
+                margin: 5px 0;
+            }
+            .header-logo-left img, .header-logo-right img {
+                max-width: 110px !important;
             }
         }
     </style>
@@ -100,32 +114,21 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR ADAPTABLE PARA PC Y CELULAR ---
-col_logo1, col_title, col_logo2 = st.columns([1, 2.5, 1])
-
-with col_logo1:
-    try:
-        st.markdown('<div style="text-align: center;">', unsafe_allow_html=True)
-        st.image("quantum.png", width=150)
-        st.markdown('</div>', unsafe_allow_html=True)
-    except:
-        st.write("Logo Quantum no encontrado")
-
-with col_title:
-    st.markdown("""
-        <div style='text-align: center;'>
+# --- ENCABEZADO SUPERIOR RESPONSIVO HTML/CSS ---
+st.markdown("""
+    <div class="header-flex">
+        <div class="header-logo-left">
+            <img src="app/static/quantum.png" onerror="this.src='quantum.png'" style="width: 150px;">
+        </div>
+        <div class="header-title-center">
             <h2 style='color: #212529; margin-bottom: 0px; font-size: calc(1.1rem + 1vw);'>📊 DASHBOARD CONTROL DE POSTES OBSERVADOS</h2>
             <p style='color: #6c757d; margin-top: 5px; font-size: calc(0.8rem + 0.3vw);'>Monitoreo en tiempo real de avance y levantamiento de observaciones en obra.</p>
         </div>
-    """, unsafe_allow_html=True)
-
-with col_logo2:
-    try:
-        st.markdown('<div style="text-align: center;">', unsafe_allow_html=True)
-        st.image("logo.png", width=120)
-        st.markdown('</div>', unsafe_allow_html=True)
-    except:
-        st.write("Logo Municipalidad no encontrado")
+        <div class="header-logo-right">
+            <img src="app/static/logo.png" onerror="this.src='logo.png'" style="width: 125px;">
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -431,7 +434,7 @@ else:
         except Exception as e:
             st.error(f"Error al generar Excel: {e}")
 
-    # 2. Botón para Exportar a PDF (Con Gráficos Optimizados)
+    # 2. Botón para Exportar a PDF
     with col_exp2:
         def generar_pdf_con_matplot(data_df, total, pend, aten, conf):
             buffer = io.BytesIO()
@@ -451,7 +454,6 @@ else:
             elements.append(Paragraph(kpi_text, ParagraphStyle('KPI', parent=styles['Normal'], fontSize=10, alignment=1)))
             elements.append(Spacer(1, 15))
 
-            # --- GENERAR GRÁFICOS CON MATPLOTLIB ---
             img_buf_1, img_buf_2 = None, None
             try:
                 if 'ESTADO' in data_df.columns and len(data_df) > 0:
