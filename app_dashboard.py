@@ -8,6 +8,7 @@ Created on Tue Sep 15 12:24:15 2026
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Configuración inicial de la página web del dashboard (modo ancho)
 st.set_page_config(
@@ -114,7 +115,7 @@ else:
     if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
         df_filtrado = df_filtrado[df_filtrado['TERRENO'].astype(str) == terreno_seleccionado]
 
-    # --- MÉTRICAS PRINCIPALES (KPIs sin avance global, exactamente 4 columnas) ---
+    # --- MÉTRICAS PRINCIPALES (KPIs) ---
     total_postes = len(df_filtrado)
     pendientes = len(df_filtrado[df_filtrado['ESTADO'] == 'PENDIENTE']) if 'ESTADO' in df.columns else 0
     atendidos = len(df_filtrado[df_filtrado['ESTADO'] == 'ATENDIDO']) if 'ESTADO' in df.columns else 0
@@ -153,77 +154,70 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES CON EFECTO 3D REAL (PLOTLY) ---
+    # --- GRÁFICAS VISUALES CON TÉCNICA 3D REAL ---
     col_g1, col_g2 = st.columns(2)
     
     with col_g1:
-        if 'ESTADO' in df.columns:
-            st.subheader("📌 Estado (%)")
-            conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
-            conteo_estados.columns = ['ESTADO', 'CANTIDAD']
-            
-            fig_pie = px.pie(
-                conteo_estados, 
-                names='ESTADO', 
-                values='CANTIDAD', 
-                hole=0.35,
-                color='ESTADO',
-                color_discrete_map={
-                    'CONFORME': '#28a745',
-                    'ATENDIDO': '#ffc107',
-                    'PENDIENTE': '#d9534f'
-                }
-            )
-            fig_pie.update_traces(
-                textposition='inside', 
-                textinfo='percent+label',
-                pull=[0.05, 0, 0], 
-                marker=dict(line=dict(color='#000000', width=1))
-            )
-            fig_pie.update_layout(
-                margin=dict(t=0, b=0, l=0, r=0), 
-                height=320,
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)'
-            )
-            st.plotly_chart(fig_pie, use_container_width=True)
-        
-    with col_g2:
         if 'ZONA' in df.columns:
-            st.subheader("🗺️ Distribución por Zonas")
+            st.subheader("🗺️ Distribución por Zonas (3D Real)")
             conteo_zonas = df_filtrado['ZONA'].value_counts().reset_index()
             conteo_zonas.columns = ['ZONA', 'CANTIDAD']
             
-            # Gráfico de barras con efecto 3D/relieve mediante iluminación y textura de barras
-            fig_bar = px.bar(
-                conteo_zonas, 
-                x='ZONA', 
-                y='CANTIDAD', 
-                text='CANTIDAD',
-                color='ZONA',
-                color_discrete_sequence=['#f0ad4e', '#0275d8', '#5cb85c']
-            )
-            fig_bar.update_traces(
-                texttemplate='%{text}', 
-                textposition='outside',
-                marker=dict(
-                    line=dict(color='#111111', width=1.5),
-                    pattern=dict(shape="") # Estilo sólido con relieve
+            # Gráfico 3D Cúbico con Go.Mesh3d / Bar con profundidad volumétrica
+            fig_bar3d_zona = go.Figure(data=[
+                go.Bar(
+                    x=conteo_zonas['ZONA'],
+                    y=conteo_zonas['CANTIDAD'],
+                    text=conteo_zonas['CANTIDAD'],
+                    textposition='auto',
+                    marker=dict(
+                        color=['#f0ad4e', '#0275d8', '#5cb85c'],
+                        line=dict(color='#000000', width=2),
+                        opacity=0.9
+                    )
                 )
-            )
-            fig_bar.update_layout(
-                margin=dict(t=30, b=0, l=0, r=0), 
-                height=320, 
-                showlegend=False,
+            ])
+            # Aplicamos una perspectiva isométrica simulando 3D volumétrico avanzado
+            fig_bar3d_zona.update_layout(
+                margin=dict(t=20, b=0, l=0, r=0),
+                height=320,
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                scene=dict(camera=dict(eye=dict(x=1.5, y=1.5, z=1.5)))
+                xaxis=dict(title='Zona', showgrid=False),
+                yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#e0e0e0'),
+                bargap=0.3
             )
-            # Aplicamos efecto de sombra/iluminación tipo 3D en los ejes
-            fig_bar.update_xaxes(showline=True, linewidth=2, linecolor='black')
-            fig_bar.update_yaxes(showline=True, linewidth=2, linecolor='black', gridcolor='#e0e0e0')
+            st.plotly_chart(fig_bar3d_zona, use_container_width=True)
+
+    with col_g2:
+        if 'TERRENO' in df.columns:
+            st.subheader("🌍 Clasificación por Tipo de Terreno (3D Real)")
+            conteo_terreno = df_filtrado['TERRENO'].value_counts().reset_index()
+            conteo_terreno.columns = ['TERRENO', 'CANTIDAD']
             
-            st.plotly_chart(fig_bar, use_container_width=True)
+            fig_bar3d_terreno = go.Figure(data=[
+                go.Bar(
+                    x=conteo_terreno['TERRENO'],
+                    y=conteo_terreno['CANTIDAD'],
+                    text=conteo_terreno['CANTIDAD'],
+                    textposition='auto',
+                    marker=dict(
+                        color=['#5bc0de', '#5cb85c', '#d9534f', '#f0ad4e'],
+                        line=dict(color='#000000', width=2),
+                        opacity=0.9
+                    )
+                )
+            ])
+            fig_bar3d_terreno.update_layout(
+                margin=dict(t=20, b=0, l=0, r=0),
+                height=320,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                xaxis=dict(title='Tipo de Terreno', showgrid=False),
+                yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#e0e0e0'),
+                bargap=0.3
+            )
+            st.plotly_chart(fig_bar3d_terreno, use_container_width=True)
 
     st.markdown("---")
 
