@@ -274,10 +274,14 @@ else:
 
     st.markdown("---")
 
-    # Función para resaltar en verde claro las filas que tengan estado 'CONFORME'
-    def resaltar_conformes(row):
-        if 'ESTADO' in row and str(row['ESTADO']).upper() == 'CONFORME':
-            return ['background-color: #d4edda; color: #155724; font-weight: bold'] * len(row)
+    # Función para resaltar filas según su estado (Conforme en verde suave, Atendido en amarillo suave)
+    def resaltar_filas(row):
+        if 'ESTADO' in row:
+            estado = str(row['ESTADO']).upper()
+            if estado == 'CONFORME':
+                return ['background-color: #d9ead3; color: #274e13; font-weight: bold'] * len(row)
+            elif estado == 'ATENDIDO':
+                return ['background-color: #fff2cc; color: #7f6000; font-weight: bold'] * len(row)
         return [''] * len(row)
 
     # --- BUSCADOR RÁPIDO DE POSTE ESPECÍFICO ---
@@ -288,8 +292,7 @@ else:
     
     if poste_buscado != "-- Seleccionar --":
         datos_poste = df[df[col_busqueda].astype(str) == str(poste_buscado)]
-        # Aplicando estilo resaltado en verde para conformes
-        datos_poste_estilizado = datos_poste.style.apply(resaltar_conformes, axis=1)
+        datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
 
     st.markdown("---")
@@ -297,8 +300,7 @@ else:
     # --- TABLA DE DATOS INTERACTIVA COMPLETA ---
     st.subheader(f"📋 Detalle de Registros Filtrados ({len(df_filtrado)} elementos)")
     
-    # Aplicando estilo resaltado en verde para conformes en la tabla completa
-    df_filtrado_estilizado = df_filtrado.style.apply(resaltar_conformes, axis=1)
+    df_filtrado_estilizado = df_filtrado.style.apply(resaltar_filas, axis=1)
     st.dataframe(df_filtrado_estilizado, use_container_width=True)
     
     # Botón de refresco manual
