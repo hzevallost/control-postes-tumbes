@@ -169,7 +169,7 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES (CON ESTADOS PENDIENTE, ATENDIDO Y CONFORME EN BARRAS) ---
+    # --- GRÁFICAS VISUALES (BARRAS APILADAS CON LOS 3 ESTADOS) ---
     col_g1, col_g2 = st.columns(2)
     
     color_estados = {
@@ -182,7 +182,6 @@ else:
         if 'ZONA' in df.columns and 'ESTADO' in df.columns:
             st.subheader("🗺️ Observados por Zonas")
             
-            # Agrupación cruzada para desglosar por estados en las barras
             df_zona_estado = df_filtrado.groupby(['ZONA', 'ESTADO']).size().unstack(fill_value=0).reset_index()
             
             fig_bar_zona = go.Figure()
@@ -197,7 +196,7 @@ else:
                     ))
 
             fig_bar_zona.update_layout(
-                barmode='group',
+                barmode='stack',  # <--- BARRAS APILADAS EN UNA SOLA BARRA
                 margin=dict(t=20, b=0, l=0, r=0),
                 height=320,
                 paper_bgcolor='rgba(0,0,0,0)',
@@ -237,7 +236,7 @@ else:
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Desglosado por Estados)
+    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Apilado en una misma barra)
     if 'TERRENO' in df.columns and 'ESTADO' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("🌍 Clasificación por Tipo de Terreno")
@@ -256,7 +255,7 @@ else:
                 ))
 
         fig_bar_terreno.update_layout(
-            barmode='group',
+            barmode='stack',  # <--- BARRAS APILADAS EN UNA SOLA BARRA
             margin=dict(t=20, b=0, l=0, r=0),
             height=320,
             paper_bgcolor='rgba(0,0,0,0)',
