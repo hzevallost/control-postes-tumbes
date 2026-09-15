@@ -40,8 +40,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Enlace CSV público de Google Sheets
-sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTKr-q0vtewH2ya17kZjYnTNw9JS-9kp1ZDtFjGqx7LQcXycDd_Gk_VrnPXS3NTA/pub?output=csv"
+# ID directo de tu Google Sheet (extraído de tu enlace original)
+sheet_id = "1HTEqO1G5xgyMCNrocYvOeKIXTV0xhsKg"
+sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 
 @st.cache_data(ttl=60)
 def cargar_datos_gsheets(url):
@@ -64,6 +65,7 @@ if df is None or len(df) == 0:
     st.error("No se pudo cargar la información desde Google Sheets.")
     if error_detallado:
         st.info(f"Detalle técnico del error: {error_detallado}")
+    st.warning("⚠️ Asegúrate de que el Google Sheet esté compartido como 'Cualquier usuario que tenga el vínculo' (Lector o Editor).")
 else:
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("🔍 Filtros de Búsqueda")
@@ -90,7 +92,7 @@ else:
     if terreno_seleccionado != 'TODOS' and 'TERRENO' in df.columns:
         df_filtrado = df_filtrado[df_filtrado['TERRENO'] == terreno_seleccionado]
 
-    # --- MÉTRICAS PRINCIPALES (KPIs con impacto visual basados en los datos filtrados o totales) ---
+    # --- MÉTRICAS PRINCIPALES (KPIs) ---
     total_postes = len(df_filtrado)
     pendientes = len(df_filtrado[df_filtrado['ESTADO'] == 'PENDIENTE'])
     ok = len(df_filtrado[df_filtrado['ESTADO'] == 'OK'])
