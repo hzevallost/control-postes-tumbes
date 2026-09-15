@@ -104,7 +104,7 @@ else:
     df.index = df.index + 1  # Inicia estrictamente en 1
 
     if df.shape[1] >= 7:
-        df.columns = ['ZONA', 'N° POSTE', 'TIPO / ALTURA', 'TERRENO', 'UBICACIÓN / DESCRIPCIÓN', 'OBSERVACIÓN / ACCIÓN', 'ESTADO'] + [f'EXTRA_{i}' for i in range(7, df.shape[1])]
+        df.columns = ['ZONA', 'N° POSTE', 'TIPO / ALTURA', 'TERRENO', 'JUSTIFICACIÓN', 'OBSERVACIÓN / ACCIÓN', 'ESTADO'] + [f'EXTRA_{i}' for i in range(7, df.shape[1])]
 
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("🔍 Filtros de Búsqueda")
