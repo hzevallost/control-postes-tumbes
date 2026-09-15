@@ -28,7 +28,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Estilos CSS generales y centrado vertical del título respecto al logo
+# Estilos CSS generales y clases para centrar títulos de gráficos
 st.markdown("""
     <style>
         .metric-card {
@@ -56,6 +56,13 @@ st.markdown("""
         }
         [data-testid="stImage"] img {
             padding: 4px 0px;
+        }
+        .centered-subheader {
+            text-align: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #212529;
+            margin-bottom: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -186,7 +193,7 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES (BARRAS APILADAS CON ETIQUETAS NUMÉRICAS) ---
+    # --- GRÁFICAS VISUALES (TÍTULOS CENTRADOS) ---
     col_g1, col_g2 = st.columns(2)
     
     color_estados = {
@@ -197,7 +204,7 @@ else:
 
     with col_g1:
         if 'ZONA' in df.columns and 'ESTADO' in df.columns:
-            st.subheader("🗺️ Observados por Zonas")
+            st.markdown('<div class="centered-subheader">🗺️ Observados por Zonas</div>', unsafe_allow_html=True)
             
             df_zona_estado = df_filtrado.groupby(['ZONA', 'ESTADO']).size().unstack(fill_value=0).reset_index()
             
@@ -229,7 +236,7 @@ else:
         
     with col_g2:
         if 'ESTADO' in df.columns:
-            st.subheader("📌 Estado (% Total de Avance)")
+            st.markdown('<div class="centered-subheader">📌 Estado (% Total de Avance)</div>', unsafe_allow_html=True)
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
@@ -256,10 +263,10 @@ else:
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Apilado con etiquetas)
+    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Centrado)
     if 'TERRENO' in df.columns and 'ESTADO' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("🌍 Clasificación por Tipo de Terreno")
+        st.markdown('<div class="centered-subheader">🌍 Clasificación por Tipo de Terreno</div>', unsafe_allow_html=True)
         
         df_terreno_estado = df_filtrado.groupby(['TERRENO', 'ESTADO']).size().unstack(fill_value=0).reset_index()
         
