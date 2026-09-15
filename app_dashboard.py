@@ -169,7 +169,7 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES (BARRAS APILADAS CON LOS 3 ESTADOS) ---
+    # --- GRÁFICAS VISUALES (BARRAS APILADAS CON ETIQUETAS NUMÉRICAS) ---
     col_g1, col_g2 = st.columns(2)
     
     color_estados = {
@@ -191,12 +191,15 @@ else:
                         name=estado,
                         x=df_zona_estado['ZONA'],
                         y=df_zona_estado[estado],
+                        text=df_zona_estado[estado],  # <--- Muestra la cantidad numérica
+                        textposition='inside',        # <--- Ubica la etiqueta dentro de la sección
+                        textfont=dict(color='white', size=13, family="Arial Black"), # Texto destacado
                         marker_color=color_estados.get(estado, '#333333'),
                         marker_line=dict(color='#111111', width=1.5)
                     ))
 
             fig_bar_zona.update_layout(
-                barmode='stack',  # <--- BARRAS APILADAS EN UNA SOLA BARRA
+                barmode='stack',
                 margin=dict(t=20, b=0, l=0, r=0),
                 height=320,
                 paper_bgcolor='rgba(0,0,0,0)',
@@ -209,7 +212,7 @@ else:
         
     with col_g2:
         if 'ESTADO' in df.columns:
-            st.subheader("📌 Estado (% Total de Avance)")
+            st.subheader("📌 Estado (% de Avance)")
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
@@ -236,7 +239,7 @@ else:
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Apilado en una misma barra)
+    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Apilado con etiquetas)
     if 'TERRENO' in df.columns and 'ESTADO' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("🌍 Clasificación por Tipo de Terreno")
@@ -250,12 +253,15 @@ else:
                     name=estado,
                     x=df_terreno_estado['TERRENO'],
                     y=df_terreno_estado[estado],
+                    text=df_terreno_estado[estado],  # <--- Muestra la cantidad numérica
+                    textposition='inside',        # <--- Ubica la etiqueta dentro de la sección
+                    textfont=dict(color='white', size=13, family="Arial Black"),
                     marker_color=color_estados.get(estado, '#333333'),
                     marker_line=dict(color='#111111', width=1.5)
                 ))
 
         fig_bar_terreno.update_layout(
-            barmode='stack',  # <--- BARRAS APILADAS EN UNA SOLA BARRA
+            barmode='stack',
             margin=dict(t=20, b=0, l=0, r=0),
             height=320,
             paper_bgcolor='rgba(0,0,0,0)',
