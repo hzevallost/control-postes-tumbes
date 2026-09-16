@@ -299,45 +299,42 @@ else:
         datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
         
-        # Visor fotográfico con iframe interactivo nativo de Google Drive para visualización perfecta
+        # Visor fotográfico limpio mostrando directamente las imágenes de Google Drive
         if 'FOTO ANTES' in df.columns and 'FOTO DESPUES' in df.columns:
             st.markdown("### 📸 Registro Fotográfico (Antes / Después)")
             
             val_antes = str(datos_poste['FOTO ANTES'].values[0]).strip()
             val_despues = str(datos_poste['FOTO DESPUES'].values[0]).strip()
             
-            DRIVE_FOLDER_ID = "1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx"
-            
             c_foto1, c_foto2 = st.columns(2)
             
             with c_foto1:
-                st.markdown("**📸 Estado: ANTES**")
+                st.markdown(f"**📸 Estado: ANTES** &nbsp;&nbsp;|&nbsp;&nbsp; Código: `{val_antes}`")
                 if val_antes and val_antes.lower() != 'nan':
-                    st.markdown(f"Código: **{val_antes}**")
+                    # Mapeo de IDs de Google Drive
+                    id_antes = "1RfCUkxAShfPcxrTHWHBh7Byq-QNZHvJD" if val_antes == "116_A" else None
                     
-                    # ID de prueba para 116_A o asignación directa
-                    id_imagen = "1RfCUkxAShfPcxrTHWHBh7Byq-QNZHvJD" if val_antes == "116_A" else None
-                    
-                    if id_imagen:
-                        # Visor embebido oficial de Google Drive que garantiza visualización limpia sin errores de permisos
-                        url_embed = f"https://drive.google.com/file/d/{id_imagen}/preview"
+                    if id_antes:
+                        url_embed = f"https://drive.google.com/file/d/{id_antes}/preview"
                         st.markdown(f'<iframe src="{url_embed}" width="100%" height="350" style="border: 1px solid #ced4da; border-radius: 8px;" allow="autoplay"></iframe>', unsafe_allow_html=True)
                     else:
-                        url_drive = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                        st.info(f"Carpeta compartida para revisión: `{val_antes}.jpeg`")
-                        st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Abrir Carpeta Google Drive</a>', unsafe_allow_html=True)
+                        st.info(f"Pendiente de asignar ID para: {val_antes}")
                 else:
-                    st.info("No hay código registrado para 'FOTO ANTES'.")
+                    st.info("No hay código registrado.")
             
             with c_foto2:
-                st.markdown("**📸 Estado: DESPUÉS**")
+                st.markdown(f"**📸 Estado: DESPUÉS** &nbsp;&nbsp;|&nbsp;&nbsp; Código: `{val_despues}`")
                 if val_despues and val_despues.lower() != 'nan':
-                    st.markdown(f"Código: **{val_despues}**")
-                    url_drive = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                    st.info(f"Carpeta compartida para revisión: `{val_despues}.jpeg`")
-                    st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Abrir Carpeta Google Drive</a>', unsafe_allow_html=True)
+                    # Mapeo de IDs de Google Drive para las fotos "DESPUÉS"
+                    id_despues = None  # Agrega aquí los IDs de las fotos después conforme las vayas subiendo
+                    
+                    if id_despues:
+                        url_embed = f"https://drive.google.com/file/d/{id_despues}/preview"
+                        st.markdown(f'<iframe src="{url_embed}" width="100%" height="350" style="border: 1px solid #ced4da; border-radius: 8px;" allow="autoplay"></iframe>', unsafe_allow_html=True)
+                    else:
+                        st.info(f"Esperando imagen para código: {val_despues}")
                 else:
-                    st.info("No hay código registrado para 'FOTO DESPUES'.")
+                    st.info("No hay código registrado.")
 
     st.markdown("---")
 
