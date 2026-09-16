@@ -129,7 +129,14 @@ else:
     df.index = df.index + 1  # Inicia estrictamente en 1
 
     if df.shape[1] >= 7:
-        df.columns = ['ZONA', 'N° POSTE', 'TIPO / ALTURA', 'TERRENO', 'JUSTIFICACIÓN', 'OBSERVACIÓN / ACCIÓN', 'ESTADO'] + [f'EXTRA_{i}' for i in range(7, df.shape[1])]
+        n_cols_base = 7
+        n_extra = df.shape[1] - n_cols_base
+        base_names = ['ZONA', 'N° POSTE', 'TIPO / ALTURA', 'TERRENO', 'JUSTIFICACIÓN', 'OBSERVACIÓN / ACCIÓN', 'ESTADO']
+        if n_extra >= 2:
+            base_names += ['FOTO ANTES', 'FOTO DESPUES'] + [f'EXTRA_{i}' for i in range(9, df.shape[1])]
+        else:
+            base_names += [f'EXTRA_{i}' for i in range(7, df.shape[1])]
+        df.columns = base_names
 
     # --- BARRA LATERAL (FILTROS) ---
     st.sidebar.header("🔍 Filtros de Búsqueda")
@@ -197,7 +204,7 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES (TÍTULOS Y LEYENDAS PERFECTAMENTE CENTRADOS) ---
+    # --- GRÁFICAS VISUALES ---
     col_g1, col_g2 = st.columns(2)
     
     color_estados = {
@@ -209,7 +216,6 @@ else:
     with col_g1:
         if 'ZONA' in df.columns and 'ESTADO' in df.columns:
             st.markdown('<div class="centered-subheader"><span>🗺️</span> <span>Observados por Zonas</span></div>', unsafe_allow_html=True)
-            
             df_zona_estado = df_filtrado.groupby(['ZONA', 'ESTADO']).size().unstack(fill_value=0).reset_index()
             
             fig_bar_zona = go.Figure()
@@ -227,11 +233,8 @@ else:
                     ))
 
             fig_bar_zona.update_layout(
-                barmode='stack',
-                margin=dict(t=20, b=0, l=0, r=0),
-                height=320,
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
+                barmode='stack', margin=dict(t=20, b=0, l=0, r=0), height=320,
+                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
                 xaxis=dict(title='Zona', showgrid=False, linecolor='black', linewidth=2),
                 yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
@@ -244,56 +247,29 @@ else:
             conteo_estados = df_filtrado['ESTADO'].value_counts().reset_index()
             conteo_estados.columns = ['ESTADO', 'CANTIDAD']
             
-            fig_pie = px.pie(
-                conteo_estados, 
-                names='ESTADO', 
-                values='CANTIDAD', 
-                hole=0.35,
-                color='ESTADO',
-                color_discrete_map=color_estados
-            )
-            fig_pie.update_traces(
-                textposition='inside', 
-                textinfo='percent+label',
-                pull=[0.05, 0, 0], 
-                marker=dict(line=dict(color='#000000', width=1))
-            )
-            fig_pie.update_layout(
-                margin=dict(t=0, b=0, l=0, r=0), 
-                height=320,
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
-            )
+            fig_pie = px.pie(conteo_estados, names='ESTADO', values='CANTIDAD', hole=0.35, color='ESTADO', color_discrete_map=color_estados)
+            fig_pie.update_traces(textposition='inside', textinfo='percent+label', pull=[0.05, 0, 0], marker=dict(line=dict(color='#000000', width=1)))
+            fig_pie.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5))
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
-    # Segunda fila de gráficos: Clasificación por Tipo de Terreno (Centrado)
     if 'TERRENO' in df.columns and 'ESTADO' in df.columns:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<div class="centered-subheader"><span>🌍</span> <span>Clasificación por Tipo de Terreno</span></div>', unsafe_allow_html=True)
-        
         df_terreno_estado = df_filtrado.groupby(['TERRENO', 'ESTADO']).size().unstack(fill_value=0).reset_index()
         
         fig_bar_terreno = go.Figure()
         for estado in ['PENDIENTE', 'ATENDIDO', 'CONFORME']:
             if estado in df_terreno_estado.columns:
                 fig_bar_terreno.add_trace(go.Bar(
-                    name=estado,
-                    x=df_terreno_estado['TERRENO'],
-                    y=df_terreno_estado[estado],
-                    text=df_terreno_estado[estado],
-                    textposition='inside',
+                    name=estado, x=df_terreno_estado['TERRENO'], y=df_terreno_estado[estado],
+                    text=df_terreno_estado[estado], textposition='inside',
                     textfont=dict(color='white', size=13, family="Arial Black"),
-                    marker_color=color_estados.get(estado, '#333333'),
-                    marker_line=dict(color='#111111', width=1.5)
+                    marker_color=color_estados.get(estado, '#333333'), marker_line=dict(color='#111111', width=1.5)
                 ))
 
         fig_bar_terreno.update_layout(
-            barmode='stack',
-            margin=dict(t=20, b=0, l=0, r=0),
-            height=320,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
+            barmode='stack', margin=dict(t=20, b=0, l=0, r=0), height=320,
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(title='Tipo de Terreno', showgrid=False, linecolor='black', linewidth=2),
             yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
@@ -302,7 +278,6 @@ else:
 
     st.markdown("---")
 
-    # Función para resaltar filas según su estado
     def resaltar_filas(row):
         if 'ESTADO' in row:
             estado = str(row['ESTADO']).upper()
@@ -312,22 +287,51 @@ else:
                 return ['background-color: #fff2cc; color: #7f6000; font-weight: bold'] * len(row)
         return [''] * len(row)
 
-    # --- BUSCADOR RÁPIDO DE POSTE ESPECÍFICO ---
-    st.subheader("🔍 Consulta Individual de Poste")
+    # --- BUSCADOR RÁPIDO DE POSTE Y VISOR INTEGRADO CON GOOGLE DRIVE ---
+    st.subheader("🔍 Consulta Individual de Poste y Fotografías de Obra")
     col_busqueda = 'N° POSTE' if 'N° POSTE' in df.columns else df.columns[1]
     lista_postes = list(df[col_busqueda].astype(str).unique())
-    poste_buscado = st.selectbox("Seleccione o busque el número de poste:", ["-- Seleccionar --"] + lista_postes)
+    poste_buscado = st.selectbox("Seleccione o busque el número de poste para inspeccionar:", ["-- Seleccionar --"] + lista_postes)
     
     if poste_buscado != "-- Seleccionar --":
         datos_poste = df[df[col_busqueda].astype(str) == str(poste_buscado)]
         datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
+        
+        # Visor fotográfico con códigos cortos (ej. 116_A / 116_D) vinculados a la carpeta de Drive
+        if 'FOTO ANTES' in df.columns and 'FOTO DESPUES' in df.columns:
+            st.markdown("### 📸 Registro Fotográfico (Antes / Después)")
+            
+            val_antes = str(datos_poste['FOTO ANTES'].values[0]).strip()
+            val_despues = str(datos_poste['FOTO DESPUES'].values[0]).strip()
+            
+            # ID de tu carpeta de Google Drive configurado
+            DRIVE_FOLDER_ID = "1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx" 
+            
+            c_foto1, c_foto2 = st.columns(2)
+            
+            with c_foto1:
+                st.markdown("**📸 Estado: ANTES**")
+                if val_antes and val_antes.lower() != 'nan':
+                    st.success(f"Código detectado: **{val_antes}**")
+                    st.markdown(f"📁 Busque el archivo **{val_antes}** en su carpeta de Google Drive.")
+                    st.markdown(f"[🔗 Abrir carpeta de fotos en Google Drive](https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID})", unsafe_allow_html=True)
+                else:
+                    st.info("No hay código registrado para 'FOTO ANTES'.")
+            
+            with c_foto2:
+                st.markdown("**📸 Estado: DESPUÉS**")
+                if val_despues and val_despues.lower() != 'nan':
+                    st.success(f"Código detectado: **{val_despues}**")
+                    st.markdown(f"📁 Busque el archivo **{val_despues}** en su carpeta de Google Drive.")
+                    st.markdown(f"[🔗 Abrir carpeta de fotos en Google Drive](https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID})", unsafe_allow_html=True)
+                else:
+                    st.info("No hay código registrado para 'FOTO DESPUES'.")
 
     st.markdown("---")
 
     # --- TABLA DE DATOS INTERACTIVA COMPLETA ---
     st.subheader(f"📋 Detalle de Registros Filtrados ({len(df_filtrado)} elementos)")
-    
     df_filtrado_estilizado = df_filtrado.style.apply(resaltar_filas, axis=1)
     st.dataframe(df_filtrado_estilizado, use_container_width=True)
 
@@ -335,7 +339,6 @@ else:
     st.markdown("### 📥 Exportar Reportes de Obra")
     col_exp1, col_exp2 = st.columns(2)
 
-    # 1. Botón para Exportar a EXCEL con Formato Profesional
     with col_exp1:
         def generar_excel_estilizado(data_df):
             wb = Workbook()
@@ -363,10 +366,8 @@ else:
             
             default_font = Font(name="Arial", size=9)
             thin_border = Border(
-                left=Side(style='thin', color='DEE2E6'),
-                right=Side(style='thin', color='DEE2E6'),
-                top=Side(style='thin', color='DEE2E6'),
-                bottom=Side(style='thin', color='DEE2E6')
+                left=Side(style='thin', color='DEE2E6'), right=Side(style='thin', color='DEE2E6'),
+                top=Side(style='thin', color='DEE2E6'), bottom=Side(style='thin', color='DEE2E6')
             )
 
             estado_idx = headers.index('ESTADO') + 1 if 'ESTADO' in headers else None
@@ -401,15 +402,13 @@ else:
             excel_data = generar_excel_estilizado(df_filtrado)
             st.download_button(
                 label="📊 Descargar Reporte en Excel con Formato (.xlsx)",
-                data=excel_data,
-                file_name="reporte_control_postes.xlsx",
+                data=excel_data, file_name="reporte_control_postes.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
         except Exception as e:
             st.error(f"Error al generar Excel: {e}")
 
-    # 2. Botón para Exportar a PDF
     with col_exp2:
         def generar_pdf_con_matplot(data_df, total, pend, aten, conf):
             buffer = io.BytesIO()
@@ -436,15 +435,7 @@ else:
                     conteo = data_df['ESTADO'].value_counts()
                     colores_pie = ['#d9534f' if x=='PENDIENTE' else '#ffc107' if x=='ATENDIDO' else '#28a745' for x in conteo.index]
                     
-                    wedges, texts, autotexts = ax.pie(
-                        conteo, 
-                        labels=None, 
-                        colors=colores_pie, 
-                        autopct='%1.1f%%', 
-                        startangle=90, 
-                        pctdistance=0.55,
-                        textprops={'fontsize': 8, 'weight': 'bold', 'color': 'white'}
-                    )
+                    wedges, texts, autotexts = ax.pie(conteo, labels=None, colors=colores_pie, autopct='%1.1f%%', startangle=90, pctdistance=0.55, textprops={'fontsize': 8, 'weight': 'bold', 'color': 'white'})
                     ax.legend(wedges, conteo.index, title="Estado", loc="center left", bbox_to_anchor=(0.95, 0.5), fontsize=8, title_fontsize=8)
                     ax.set_title("Distribución por Estado", fontsize=9, fontweight='bold')
                     plt.tight_layout()
@@ -457,7 +448,6 @@ else:
                 if 'ZONA' in data_df.columns and 'ESTADO' in data_df.columns and len(data_df) > 0:
                     fig, ax = plt.subplots(figsize=(4.8, 2.2))
                     df_zona_est = data_df.groupby(['ZONA', 'ESTADO']).size().unstack(fill_value=0)
-                    
                     for est in ['PENDIENTE', 'ATENDIDO', 'CONFORME']:
                         if est not in df_zona_est.columns:
                             df_zona_est[est] = 0
@@ -465,7 +455,6 @@ else:
                     
                     bottom = None
                     colores_bar = ['#d9534f', '#ffc107', '#28a745']
-                    
                     for idx, estado in enumerate(df_zona_est.columns):
                         values = df_zona_est[estado].values
                         ax.bar(df_zona_est.index.astype(str), values, bottom=bottom, label=estado, color=colores_bar[idx], width=0.45)
@@ -519,9 +508,7 @@ else:
                 row_cells = [Paragraph(str(val), estilo_celda) for val in row]
                 table_data.append(row_cells)
                 
-            col_widths = [75, 55, 65, 75, 180, 225, 60]
-            if len(col_widths) != len(data_df.columns):
-                col_widths = None
+            col_widths = None
                 
             t = Table(table_data, colWidths=col_widths, repeatRows=1)
             t.setStyle(TableStyle([
@@ -542,10 +529,8 @@ else:
             pdf_data = generar_pdf_con_matplot(df_filtrado, total_postes, pendientes, atendidos, conformes)
             st.download_button(
                 label="📄 Descargar Reporte Ejecutivo con Gráficos en PDF",
-                data=pdf_data,
-                file_name="reporte_ejecutivo_postes.pdf",
-                mime="application/pdf",
-                use_container_width=True
+                data=pdf_data, file_name="reporte_ejecutivo_postes.pdf",
+                mime="application/pdf", use_container_width=True
             )
         except Exception as e:
             st.info(f"Detalle del PDF: {e}")
