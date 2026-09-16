@@ -298,33 +298,38 @@ else:
         datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
         
-        # Visor fotográfico con códigos cortos (ej. 116_A / 116_D) vinculados a la carpeta de Drive
+        # Visor fotográfico inteligente con códigos cortos (ej. 116_A / 116_D)
         if 'FOTO ANTES' in df.columns and 'FOTO DESPUES' in df.columns:
             st.markdown("### 📸 Registro Fotográfico (Antes / Después)")
             
             val_antes = str(datos_poste['FOTO ANTES'].values[0]).strip()
             val_despues = str(datos_poste['FOTO DESPUES'].values[0]).strip()
             
-            # ID de tu carpeta de Google Drive configurado
-            DRIVE_FOLDER_ID = "1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx" 
-            
             c_foto1, c_foto2 = st.columns(2)
             
             with c_foto1:
                 st.markdown("**📸 Estado: ANTES**")
                 if val_antes and val_antes.lower() != 'nan':
-                    st.success(f"Código detectado: **{val_antes}**")
-                    st.markdown(f"📁 Busque el archivo **{val_antes}** en su carpeta de Google Drive.")
-                    st.markdown(f"[🔗 Abrir carpeta de fotos en Google Drive](https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID})", unsafe_allow_html=True)
+                    # Generar visor embebido directo con Google Drive
+                    img_url = f"https://lh3.googleusercontent.com/d/{val_antes}"
+                    st.markdown(f"Código: **{val_antes}**")
+                    try:
+                        st.image(f"https://drive.google.com/uc?export=view&id={val_antes}", caption=f"Poste {poste_buscado} - Antes", use_column_width=True)
+                    except:
+                        # Vista de respaldo o botón si el ID del archivo específico es requerido
+                        st.info("Para ver la imagen directamente aquí, asegúrate de colocar el **ID del archivo individual de Drive** en lugar del nombre.")
+                        st.markdown(f"[🔗 Abrir en Google Drive](https://drive.google.com/drive/folders/1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx)")
                 else:
                     st.info("No hay código registrado para 'FOTO ANTES'.")
             
             with c_foto2:
                 st.markdown("**📸 Estado: DESPUÉS**")
                 if val_despues and val_despues.lower() != 'nan':
-                    st.success(f"Código detectado: **{val_despues}**")
-                    st.markdown(f"📁 Busque el archivo **{val_despues}** en su carpeta de Google Drive.")
-                    st.markdown(f"[🔗 Abrir carpeta de fotos en Google Drive](https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID})", unsafe_allow_html=True)
+                    st.markdown(f"Código: **{val_despues}**")
+                    try:
+                        st.image(f"https://drive.google.com/uc?export=view&id={val_despues}", caption=f"Poste {poste_buscado} - Después", use_column_width=True)
+                    except:
+                        st.markdown(f"[🔗 Abrir en Google Drive](https://drive.google.com/drive/folders/1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx)")
                 else:
                     st.info("No hay código registrado para 'FOTO DESPUES'.")
 
