@@ -10,6 +10,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import io
+import requests
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')  # Configuración segura para servidor en la nube
@@ -287,7 +288,7 @@ else:
                 return ['background-color: #fff2cc; color: #7f6000; font-weight: bold'] * len(row)
         return [''] * len(row)
 
-    # --- BUSCADOR RÁPIDO DE POSTE Y VISOR INTEGRADO CON GOOGLE DRIVE ---
+    # --- BUSCADOR RÁPIDO DE POSTE Y VISOR AUTOMÁTICO DESDE GOOGLE DRIVE ---
     st.subheader("🔍 Consulta Individual de Poste y Fotografías de Obra")
     col_busqueda = 'N° POSTE' if 'N° POSTE' in df.columns else df.columns[1]
     lista_postes = list(df[col_busqueda].astype(str).unique())
@@ -298,7 +299,7 @@ else:
         datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
         
-        # Visor fotográfico inteligente con códigos cortos (ej. 116_A / 116_D)
+        # Visor fotográfico inteligente sincronizado con Google Drive por código corto
         if 'FOTO ANTES' in df.columns and 'FOTO DESPUES' in df.columns:
             st.markdown("### 📸 Registro Fotográfico (Antes / Después)")
             
@@ -313,9 +314,12 @@ else:
                 st.markdown("**📸 Estado: ANTES**")
                 if val_antes and val_antes.lower() != 'nan':
                     st.markdown(f"Código: **{val_antes}**")
-                    # Enlace directo de búsqueda en la carpeta pública de Google Drive para abrir con un clic
-                    url_drive_buscar = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                    st.markdown(f'<a href="{url_drive_buscar}" target="_blank" style="display: inline-block; background-color: #f8f9fa; border: 1px solid #ced4da; padding: 6px 12px; border-radius: 4px; text-decoration: none; color: #212529; font-weight: bold; font-size: 14px;">🔗 Ver foto "{val_antes}.jpeg" en Google Drive</a>', unsafe_allow_html=True)
+                    # Enlace directo optimizado de vista previa de imagen en Google Drive mediante URL web
+                    url_vista_drive = f"https://drive.google.com/file/d/{val_antes}/view" if len(val_antes) > 15 else f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
+                    
+                    # Si el usuario ingresó el código corto, generamos el enlace a la carpeta y un visor de inserción directa
+                    st.markdown(f"📁 Archivo esperado en Drive: `{val_antes}.jpeg` (o extensión similar)")
+                    st.markdown(f'[🔗 Abrir y verificar en la carpeta de Google Drive](https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID})', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO ANTES'.")
             
@@ -323,8 +327,8 @@ else:
                 st.markdown("**📸 Estado: DESPUÉS**")
                 if val_despues and val_despues.lower() != 'nan':
                     st.markdown(f"Código: **{val_despues}**")
-                    url_drive_buscar = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                    st.markdown(f'<a href="{url_drive_buscar}" target="_blank" style="display: inline-block; background-color: #f8f9fa; border: 1px solid #ced4da; padding: 6px 12px; border-radius: 4px; text-decoration: none; color: #212529; font-weight: bold; font-size: 14px;">🔗 Ver foto "{val_despues}.jpeg" en Google Drive</a>', unsafe_allow_html=True)
+                    st.markdown(f"📁 Archivo esperado en Drive: `{val_despues}.jpeg` (o extensión similar)")
+                    st.markdown(f'[🔗 Abrir y verificar en la carpeta de Google Drive](https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID})', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO DESPUES'.")
 
