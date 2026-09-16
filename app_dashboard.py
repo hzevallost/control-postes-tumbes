@@ -54,6 +54,9 @@ st.markdown("""
             padding-top: 2rem;
             padding-bottom: 2rem;
         }
+        [data-testid="stImage"] img {
+            padding: 4px 0px;
+        }
         .centered-subheader {
             text-align: center;
             font-weight: bold;
@@ -85,23 +88,14 @@ def cargar_datos_gsheets(url):
 
 df_raw, error_detallado = cargar_datos_gsheets(sheet_url)
 
-# --- ENCABEZADO SUPERIOR CON ICONO DE OBSERVACIÓN (OJO + LUPA) Y TÍTULO ---
+# --- ENCABEZADO SUPERIOR CON QUANTUM.PNG Y TÍTULO CENTRADO ---
 col_logo, col_title = st.columns([1, 4])
 
 with col_logo:
-    # Icono SVG profesional representando "Observación" (Lupa examinando un ojo / Detalle técnico)
-    st.markdown("""
-        <div style='display: flex; justify-content: center; align-items: center; height: 100%; padding: 5px;'>
-            <svg width="110" height="90" viewBox="0 0 24 24" fill="none" stroke="#0275d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <!-- Ojo de fondo -->
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="#6c757d" stroke-width="1.5" fill="#f8f9fa"/>
-                <circle cx="12" cy="12" r="3" fill="#0275d8"/>
-                <!-- Lupa de inspección / observación -->
-                <circle cx="14" cy="10" r="6" stroke="#d9534f" stroke-width="2.5" fill="rgba(217, 83, 79, 0.1)"/>
-                <line x1="18.5" y1="14.5" x2="22" y2="18" stroke="#d9534f" stroke-width="3" stroke-linecap="round"/>
-            </svg>
-        </div>
-    """, unsafe_allow_html=True)
+    try:
+        st.image("quantum.png", width=300)
+    except:
+        st.write("Logo Quantum no encontrado")
 
 with col_title:
     st.markdown("""
@@ -176,7 +170,7 @@ else:
         st.markdown(f"""
             <div class="metric-card">
                 <div class="metric-title">Observados</div>
-                <div class="metric-value">🏛️ {total_postes}</div>
+                <div class="metric-value">🔍 {total_postes}</div>
             </div>
         """, unsafe_allow_html=True)
     with col2:
