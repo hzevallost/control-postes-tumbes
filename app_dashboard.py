@@ -62,7 +62,7 @@ st.markdown("""
             font-weight: bold;
             font-size: 20px;
             color: #212529;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -197,7 +197,7 @@ else:
     
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- GRÁFICAS VISUALES (TÍTULOS Y LEYENDAS CENTRADAS) ---
+    # --- GRÁFICAS VISUALES (TÍTULOS Y LEYENDAS PERFECTAMENTE CENTRADOS) ---
     col_g1, col_g2 = st.columns(2)
     
     color_estados = {
@@ -234,7 +234,7 @@ else:
                 plot_bgcolor='rgba(0,0,0,0)',
                 xaxis=dict(title='Zona', showgrid=False, linecolor='black', linewidth=2),
                 yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
             )
             st.plotly_chart(fig_bar_zona, use_container_width=True, config={'displayModeBar': False})
         
@@ -263,7 +263,7 @@ else:
                 height=320,
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
             )
             st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
@@ -296,7 +296,7 @@ else:
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(title='Tipo de Terreno', showgrid=False, linecolor='black', linewidth=2),
             yaxis=dict(title='Cantidad', showgrid=True, gridcolor='#dcdcdc', linecolor='black', linewidth=2),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
         )
         st.plotly_chart(fig_bar_terreno, use_container_width=True, config={'displayModeBar': False})
 
