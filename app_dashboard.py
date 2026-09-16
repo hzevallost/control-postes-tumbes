@@ -305,20 +305,17 @@ else:
             val_antes = str(datos_poste['FOTO ANTES'].values[0]).strip()
             val_despues = str(datos_poste['FOTO DESPUES'].values[0]).strip()
             
+            DRIVE_FOLDER_ID = "1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx"
+            
             c_foto1, c_foto2 = st.columns(2)
             
             with c_foto1:
                 st.markdown("**📸 Estado: ANTES**")
                 if val_antes and val_antes.lower() != 'nan':
-                    # Generar visor embebido directo con Google Drive
-                    img_url = f"https://lh3.googleusercontent.com/d/{val_antes}"
                     st.markdown(f"Código: **{val_antes}**")
-                    try:
-                        st.image(f"https://drive.google.com/uc?export=view&id={val_antes}", caption=f"Poste {poste_buscado} - Antes", use_column_width=True)
-                    except:
-                        # Vista de respaldo o botón si el ID del archivo específico es requerido
-                        st.info("Para ver la imagen directamente aquí, asegúrate de colocar el **ID del archivo individual de Drive** en lugar del nombre.")
-                        st.markdown(f"[🔗 Abrir en Google Drive](https://drive.google.com/drive/folders/1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx)")
+                    # Enlace directo de búsqueda en la carpeta pública de Google Drive para abrir con un clic
+                    url_drive_buscar = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
+                    st.markdown(f'<a href="{url_drive_buscar}" target="_blank" style="display: inline-block; background-color: #f8f9fa; border: 1px solid #ced4da; padding: 6px 12px; border-radius: 4px; text-decoration: none; color: #212529; font-weight: bold; font-size: 14px;">🔗 Ver foto "{val_antes}.jpeg" en Google Drive</a>', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO ANTES'.")
             
@@ -326,10 +323,8 @@ else:
                 st.markdown("**📸 Estado: DESPUÉS**")
                 if val_despues and val_despues.lower() != 'nan':
                     st.markdown(f"Código: **{val_despues}**")
-                    try:
-                        st.image(f"https://drive.google.com/uc?export=view&id={val_despues}", caption=f"Poste {poste_buscado} - Después", use_column_width=True)
-                    except:
-                        st.markdown(f"[🔗 Abrir en Google Drive](https://drive.google.com/drive/folders/1rzca9ChAlo5_hsbKV4ZuPQq8_YDmaqcx)")
+                    url_drive_buscar = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
+                    st.markdown(f'<a href="{url_drive_buscar}" target="_blank" style="display: inline-block; background-color: #f8f9fa; border: 1px solid #ced4da; padding: 6px 12px; border-radius: 4px; text-decoration: none; color: #212529; font-weight: bold; font-size: 14px;">🔗 Ver foto "{val_despues}.jpeg" en Google Drive</a>', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO DESPUES'.")
 
