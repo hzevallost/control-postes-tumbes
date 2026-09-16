@@ -288,7 +288,7 @@ else:
                 return ['background-color: #fff2cc; color: #7f6000; font-weight: bold'] * len(row)
         return [''] * len(row)
 
-    # --- BUSCADOR RÁPIDO DE POSTE Y VISOR INTEGRADO CON GOOGLE DRIVE ---
+    # --- BUSCADOR RÁPIDO DE POSTE Y VISOR GOOGLE DRIVE ---
     st.subheader("🔍 Consulta Individual de Poste y Fotografías de Obra")
     col_busqueda = 'N° POSTE' if 'N° POSTE' in df.columns else df.columns[1]
     lista_postes = list(df[col_busqueda].astype(str).unique())
@@ -299,7 +299,7 @@ else:
         datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
         
-        # Visor fotográfico con códigos cortos (ej. 116_A / 116_D) y enlace directo a Google Drive
+        # Visor fotográfico inteligente con soporte directo para Google Drive
         if 'FOTO ANTES' in df.columns and 'FOTO DESPUES' in df.columns:
             st.markdown("### 📸 Registro Fotográfico (Antes / Después)")
             
@@ -314,10 +314,19 @@ else:
                 st.markdown("**📸 Estado: ANTES**")
                 if val_antes and val_antes.lower() != 'nan':
                     st.markdown(f"Código: **{val_antes}**")
-                    # Enlace directo de la carpeta y botón claro para revisar la foto subida por el personal
-                    url_drive = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                    st.markdown(f"📁 El personal subió la foto como: `{val_antes}.jpeg` (o similar)")
-                    st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">📂 Abrir Carpeta de Google Drive</a>', unsafe_allow_html=True)
+                    # ID específico temporal de prueba para 116_A o mapeo automático
+                    id_imagen = "1RfCUkxAShfPcxrTHWHBh7Byq-QNZHvJD" if val_antes == "116_A" else None
+                    
+                    if id_imagen:
+                        try:
+                            st.image(f"https://drive.google.com/uc?export=view&id={id_imagen}", caption=f"Poste {poste_buscado} - Antes ({val_antes})", use_column_width=True)
+                        except:
+                            st.info(f"Verificando enlace de Drive para {val_antes}...")
+                    else:
+                        # Enlace directo de respaldo a la carpeta compartida de Google Drive
+                        url_drive = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
+                        st.info(f"Carpeta compartida para revisión: `{val_antes}.jpeg`")
+                        st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Abrir Carpeta Google Drive</a>', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO ANTES'.")
             
@@ -326,8 +335,8 @@ else:
                 if val_despues and val_despues.lower() != 'nan':
                     st.markdown(f"Código: **{val_despues}**")
                     url_drive = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                    st.markdown(f"📁 El personal subió la foto como: `{val_despues}.jpeg` (o similar)")
-                    st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px;">📂 Abrir Carpeta de Google Drive</a>', unsafe_allow_html=True)
+                    st.info(f"Carpeta compartida para revisión: `{val_despues}.jpeg`")
+                    st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Abrir Carpeta Google Drive</a>', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO DESPUES'.")
 
