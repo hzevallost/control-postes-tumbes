@@ -1,6 +1,0 @@
-pandas
-streamlit
-openpyxl
-plotly
-reportlab
-matplotlib
