@@ -299,7 +299,7 @@ else:
         datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
         
-        # Visor fotográfico inteligente con soporte directo para Google Drive
+        # Visor fotográfico integrando el ID de Google Drive para 116_A
         if 'FOTO ANTES' in df.columns and 'FOTO DESPUES' in df.columns:
             st.markdown("### 📸 Registro Fotográfico (Antes / Después)")
             
@@ -314,19 +314,25 @@ else:
                 st.markdown("**📸 Estado: ANTES**")
                 if val_antes and val_antes.lower() != 'nan':
                     st.markdown(f"Código: **{val_antes}**")
-                    # ID específico temporal de prueba para 116_A o mapeo automático
-                    id_imagen = "1RfCUkxAShfPcxrTHWHBh7Byq-QNZHvJD" if val_antes == "116_A" else None
                     
-                    if id_imagen:
+                    # Diccionario rápido de mapeo dinámico para las fotos de Google Drive
+                    # Si subes nuevas fotos, solo agregas su código y su ID aquí en 1 segundo
+                    mapa_ids_drive = {
+                        "116_A": "1RfCUkxAShfPcxrTHWHBh7Byq-QNZHvJD"
+                        # Ejemplo para futuros postes: "117_A": "AQUI_SU_ID_DE_DRIVE"
+                    }
+                    
+                    id_encontrado = mapa_ids_drive.get(val_antes)
+                    
+                    if id_encontrado:
                         try:
-                            st.image(f"https://drive.google.com/uc?export=view&id={id_imagen}", caption=f"Poste {poste_buscado} - Antes ({val_antes})", use_column_width=True)
+                            st.image(f"https://drive.google.com/uc?export=view&id={id_encontrado}", caption=f"Poste {poste_buscado} - Antes ({val_antes})", use_column_width=True)
                         except:
-                            st.info(f"Verificando enlace de Drive para {val_antes}...")
+                            st.error("No se pudo cargar la imagen desde Google Drive.")
                     else:
-                        # Enlace directo de respaldo a la carpeta compartida de Google Drive
                         url_drive = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                        st.info(f"Carpeta compartida para revisión: `{val_antes}.jpeg`")
-                        st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Abrir Carpeta Google Drive</a>', unsafe_allow_html=True)
+                        st.info(f"Código `{val_antes}` en Google Drive:")
+                        st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Ver en Carpeta Google Drive</a>', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO ANTES'.")
             
