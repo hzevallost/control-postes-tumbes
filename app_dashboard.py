@@ -299,7 +299,7 @@ else:
         datos_poste_estilizado = datos_poste.style.apply(resaltar_filas, axis=1)
         st.dataframe(datos_poste_estilizado, use_container_width=True)
         
-        # Visor fotográfico integrando el ID de Google Drive para 116_A
+        # Visor fotográfico con iframe interactivo nativo de Google Drive para visualización perfecta
         if 'FOTO ANTES' in df.columns and 'FOTO DESPUES' in df.columns:
             st.markdown("### 📸 Registro Fotográfico (Antes / Después)")
             
@@ -315,24 +315,17 @@ else:
                 if val_antes and val_antes.lower() != 'nan':
                     st.markdown(f"Código: **{val_antes}**")
                     
-                    # Diccionario rápido de mapeo dinámico para las fotos de Google Drive
-                    # Si subes nuevas fotos, solo agregas su código y su ID aquí en 1 segundo
-                    mapa_ids_drive = {
-                        "116_A": "1RfCUkxAShfPcxrTHWHBh7Byq-QNZHvJD"
-                        # Ejemplo para futuros postes: "117_A": "AQUI_SU_ID_DE_DRIVE"
-                    }
+                    # ID de prueba para 116_A o asignación directa
+                    id_imagen = "1RfCUkxAShfPcxrTHWHBh7Byq-QNZHvJD" if val_antes == "116_A" else None
                     
-                    id_encontrado = mapa_ids_drive.get(val_antes)
-                    
-                    if id_encontrado:
-                        try:
-                            st.image(f"https://drive.google.com/uc?export=view&id={id_encontrado}", caption=f"Poste {poste_buscado} - Antes ({val_antes})", use_column_width=True)
-                        except:
-                            st.error("No se pudo cargar la imagen desde Google Drive.")
+                    if id_imagen:
+                        # Visor embebido oficial de Google Drive que garantiza visualización limpia sin errores de permisos
+                        url_embed = f"https://drive.google.com/file/d/{id_imagen}/preview"
+                        st.markdown(f'<iframe src="{url_embed}" width="100%" height="350" style="border: 1px solid #ced4da; border-radius: 8px;" allow="autoplay"></iframe>', unsafe_allow_html=True)
                     else:
                         url_drive = f"https://drive.google.com/drive/folders/{DRIVE_FOLDER_ID}"
-                        st.info(f"Código `{val_antes}` en Google Drive:")
-                        st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Ver en Carpeta Google Drive</a>', unsafe_allow_html=True)
+                        st.info(f"Carpeta compartida para revisión: `{val_antes}.jpeg`")
+                        st.markdown(f'<a href="{url_drive}" target="_blank" style="display: inline-block; background-color: #0d6efd; color: white; padding: 6px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px;">📂 Abrir Carpeta Google Drive</a>', unsafe_allow_html=True)
                 else:
                     st.info("No hay código registrado para 'FOTO ANTES'.")
             
