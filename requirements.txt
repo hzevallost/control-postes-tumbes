@@ -1,0 +1,10 @@
+streamlit>=1.49
+pandas>=2.2
+plotly>=6.0
+openpyxl>=3.1
+reportlab>=4.2
+matplotlib>=3.9
+google-api-python-client>=2.180
+google-auth>=2.40
+google-auth-httplib2>=0.2
+httplib2>=0.22
